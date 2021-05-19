@@ -1,0 +1,2 @@
+# ignore symbolic link to named pipe ROS_messages
+ROS_messages

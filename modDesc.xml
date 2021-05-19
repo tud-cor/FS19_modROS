@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<modDesc descVersion="51">
+    <title>
+        <en>Mod ROS</en>
+    </title>
+    <description>
+        <en>
+            <![CDATA[
+            This mod enables bi-directional communication between ROS and FarmSim19, 
+            and allows the ROS Navigation stack to control vehicles in the game using all 
+            the regular ROS infrastructure and messages.]]>
+        </en>
+    </description>
+    <author>tckarenchiang</author>
+    <version>0.0.1.0</version>
+    <iconFilename>store.png</iconFilename>
+    <multiplayer supported="false"/>
+    <extraSourceFiles>
+        <sourceFile filename="modROS.lua"/>
+    </extraSourceFiles>
+</modDesc>
+
