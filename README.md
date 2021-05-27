@@ -4,6 +4,10 @@
 
 This mod for Farming Simulator 2019 allows autonomous driving of FarmSim vehicles with the ROS navigation stack.
 
+The mod itself is hosted in this repository.
+[tud-cor/fs_mod_ros_windows](https://github.com/tud-cor/fs_mod_ros_windows) contains the companion Python scripts which implement a bridge between `modROS` and ROS 1 (using `rospy`).
+[tud-cor/fs_mod_ros](https://github.com/tud-cor/fs_mod_ros) contains two example ROS packages which show how to interact with FarmSim19 running `modROS`.
+
 
 ## Status
 
@@ -53,7 +57,7 @@ If you would like to have a simulated RGB camera (not required to run navigation
 
 ## Running
 
-To pubslish data, you need to first run a ROS node-`all_in_one_publisher.py`. Please follow the instructions [here](https://github.com/tud-cor/fs_mod_ros_windows#publishing-data).
+To publish data, you need to first run a ROS node-`all_in_one_publisher.py`. Please follow the instructions [here](https://github.com/tud-cor/fs_mod_ros_windows#publishing-data).
 
 **Note: Before proceeding to the next step, make sure you see *waiting for client from FarmSim19* in the cmd window**
 
