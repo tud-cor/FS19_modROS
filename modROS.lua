@@ -173,17 +173,6 @@ function ModROS:publish_veh_func()
         -- retrieve global (ie: world) coordinates of this node
         local p_x, p_y, p_z = getWorldTranslation(veh_node)
 
-        -- print(filename_t[#filename_t-1])
-        -- to move the base_link to the center of mass (initially was under chassis I believe)
-        -- if filename_t[#filename_t-1] == "magnum7240Pro_9" then
-        --     -- print("before")
-        --     -- print(p_x, p_y, p_z)
-        --     p_x, p_y, p_z = localToWorld(veh_node, 0, 0.9, -0.3)
-        --     -- print("after")
-        --     -- print(p_x, p_y, p_z)
-        -- end
-        -- print("after")
-        -- print(p_x, p_y, p_z)
         local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
 
         -- get twist data
