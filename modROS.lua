@@ -173,6 +173,7 @@ function ModROS:publish_veh_func()
         -- retrieve global (ie: world) coordinates of this node
         local p_x, p_y, p_z = getWorldTranslation(veh_node)
 
+        -- retrieve global (ie: world) quaternion of this node
         local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
 
         -- get twist data
