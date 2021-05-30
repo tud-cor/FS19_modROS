@@ -1,0 +1,21 @@
+name: luacheck
+
+on:
+  push:
+  pull_request:
+  # allow manually starting this workflow
+  workflow_dispatch:
+
+jobs:
+  luacheck:
+    name: Luacheck
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Fetch repository
+        uses: actions/checkout@v2
+      - name: Run luacheck
+        uses: nebularg/actions-luacheck@v1
+        with:
+          files: lua/ modROS.lua
+          annotate: warning
