@@ -282,8 +282,6 @@ end
 
 function ModROS:publish_laser_scan_func()
     local radius = 0.2
-    local x, y, z = getWorldTranslation(self.instance_veh.cameraNode)
-
     -- cache locally
     local cos = math.cos
     local sin = math.sin
@@ -291,23 +289,21 @@ function ModROS:publish_laser_scan_func()
 
     -- calculate nr of steps between rays
     local delta_theta = LS_FOV / (mod_config.laser_scan.num_rays - 1)
-    -- the "delta_y_total = 0.05" varaible is the total distance from the z axis of non-tilted laser scan layer to the z axis of last laser scan layer (most tilted one)
-    -- and is to determine how much the laser scan layers are tilted, the larger the length is, the more titlted the laser scan layer is
-    -- And "delta_y" is added between the scanning planes, along +y direction from the origin of the laser scanner
-    local delta_y_total = 0.05
-    -- quarter of length as there are four segements between 5 laser scan layers
-    local delta_y = delta_y_total / (mod_config.laser_scan.num_layers - 1)
     for i = 0, mod_config.laser_scan.num_layers-1 do
         self.laser_scan_array = {}
+        -- get the cooridante(world) of each laser scanner's origin
+        -- "mod_config.laser_scan.inter_layer_distance" is added between the scanning planes, along +y direction from the lowest laser scan plane
+        -- and all laser scan planes are parallel to each other
+        local orig_x, orig_y, orig_z = localToWorld(self.instance_veh.cameraNode, 0, mod_config.laser_scan.inter_layer_distance * i, 0)
         for j = 0, (mod_config.laser_scan.num_rays - 1) do
             local seg_theta = j * delta_theta
-            -- i_laser_dx, delta_y * i , i_laser_dz is a point to define the raycasting direction
-            -- from point self.instance_veh.cameraNode to point (i_laser_dx, delta_y * i, i_laser_dz) is the raycast direction
+            -- i_laser_dx, 0 , i_laser_dz is a point to define the raycasting direction
+            -- from point self.instance_veh.cameraNode to point (i_laser_dx, 0, i_laser_dz) is the raycast direction
             local i_laser_dx =  -sin(seg_theta) * radius
             local i_laser_dz =  -cos(seg_theta) * radius
             local dx, dy, dz =
-                localDirectionToWorld(self.instance_veh.cameraNode, i_laser_dx, delta_y * i , i_laser_dz)
-            self:laser_data_gen(x, y, z, dx, dy, dz)
+                localDirectionToWorld(self.instance_veh.cameraNode, i_laser_dx, 0 , i_laser_dz)
+            self:laser_data_gen(orig_x, orig_y, orig_z, dx, dy, dz)
         end
 
         -- FS time is "frozen" within a single call to update(..), so this
@@ -336,8 +332,8 @@ function ModROS:publish_laser_scan_func()
         -- serialise to JSON and write to pipe
         self.file_pipe:write(sensor_msgs_LaserScan.ros_msg_name .. "\n" .. scan_msg:to_json())
 
-        -- calculate the angle of the current layer's scanning plane wrt origin of the laser
-        local scanning_plane_pitch = -math.atan(delta_y * i / radius)
+        -- the angle of the current layer's scanning plane wrt origin of the laser
+        local scanning_plane_pitch = 0
         -- convert to quaternion for ROS TF; scanning_plane_pitch is the angle rotated from the origin of the laser scanner along y axis.
         local q = ros_quaternion.from_euler(0, scanning_plane_pitch, 0)
 
@@ -354,7 +350,7 @@ function ModROS:publish_laser_scan_func()
             -- note the order of the axes here (see earlier comment about FS chirality)
             base_to_laser_z,
             base_to_laser_x,
-            base_to_laser_y,
+            base_to_laser_y + mod_config.laser_scan.inter_layer_distance * i,
             -- we don't need to swap the order of q, since the calculation of q is based on the ROS chirality
             q[1],
             q[2],
