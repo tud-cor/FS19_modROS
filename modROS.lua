@@ -291,7 +291,7 @@ function ModROS:publish_laser_scan_func()
     local delta_theta = LS_FOV / (mod_config.laser_scan.num_rays - 1)
     for i = 0, mod_config.laser_scan.num_layers-1 do
         self.laser_scan_array = {}
-        -- get the cooridante(world) of each laser scanner's origin
+        -- get the (world) coordinate of each laser scanner's origin
         -- "laser_dy" is added between the scanning planes, along +y direction from the lowest laser scan plane
         -- and all laser scan planes are parallel to each other
         local laser_dy = mod_config.laser_scan.inter_layer_distance * i
