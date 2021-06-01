@@ -292,7 +292,7 @@ function ModROS:publish_laser_scan_func()
     for i = 0, mod_config.laser_scan.num_layers-1 do
         self.laser_scan_array = {}
         -- get the cooridante(world) of each laser scanner's origin
-        -- "mod_config.laser_scan.inter_layer_distance" is added between the scanning planes, along +y direction from the lowest laser scan plane
+        -- "laser_dy" is added between the scanning planes, along +y direction from the lowest laser scan plane
         -- and all laser scan planes are parallel to each other
         local laser_dy = mod_config.laser_scan.inter_layer_distance * i
         local orig_x, orig_y, orig_z = localToWorld(self.instance_veh.cameraNode, 0, laser_dy, 0)
@@ -349,7 +349,7 @@ function ModROS:publish_laser_scan_func()
             -- note the order of the axes here (see earlier comment about FS chirality)
             base_to_laser_z,
             base_to_laser_x,
-            base_to_laser_y + mod_config.laser_scan.inter_layer_distance * i,
+            base_to_laser_y + laser_dy * i,
             -- we don't need to swap the order of q, since the calculation of q is based on the ROS chirality
             q[1],
             q[2],
