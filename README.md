@@ -9,6 +9,22 @@ The mod itself is hosted in this repository.
 [tud-cor/fs_mod_ros](https://github.com/tud-cor/fs_mod_ros) contains two example ROS packages which show how to interact with FarmSim19 running `modROS`.
 
 
+### ROS message support
+
+In its current state, `modROS` publishes four types of messages:
+
+ - `rosgraph_msgs/Clock`: in-game simulated clock. This message stops being published when the game is paused/exited
+ - `nav_msgs/Odometry`: ground-truth `Pose` and `Twist` of vehicles based on their in-game position and orientation
+ - `sensor_msgs/LaserScan`: data from five virtual laser scanners (parallel planes)
+ - `sensor_msgs/Imu`: from a simulated IMU (but see [#6](https://github.com/tud-cor/FS19_modROS/issues/6))
+
+In addition, there is preliminary support for input into Farming Simulator:
+
+ - `geometry_msgs/Twist`: controls the currently active vehicle (used by the demos in [tud-cor/fs_mod_ros](https://github.com/tud-cor/fs_mod_ros)). Behaviour is similar to - but not identical to - a regular ROS `Twist` interface to a vehicle (velocity mapping is not 1-to-1 yet due to how FarmSim controls vehicles)
+
+Support for additional message types may be added in the future, but is limited by what the Farming Simulator Lua API exposes.
+
+
 ## ⚠️ Warning and disclaimer
 
 `modROS` uses memory modification techniques which *could* be considered harmful by anti-cheat systems which are often included in games with on-line gameplay.
