@@ -332,10 +332,8 @@ function ModROS:publish_laser_scan_func()
         -- serialise to JSON and write to pipe
         self.file_pipe:write(sensor_msgs_LaserScan.ros_msg_name .. "\n" .. scan_msg:to_json())
 
-        -- the angle of the current layer's scanning plane wrt origin of the laser
-        local scanning_plane_pitch = 0
-        -- convert to quaternion for ROS TF; scanning_plane_pitch is the angle rotated from the origin of the laser scanner along y axis.
-        local q = ros_quaternion.from_euler(0, scanning_plane_pitch, 0)
+        -- convert to quaternion for ROS TF
+        local q = ros_quaternion.from_euler(0, 0, 0)
 
 
         -- get the tf from base_link to all laser frames
