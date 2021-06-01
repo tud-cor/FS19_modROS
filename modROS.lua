@@ -500,6 +500,9 @@ function ModROS:rosPubMsg(flag)
         else
             -- if not, print error to console and return
             print("Could not open named pipe: unknown reason (FS Lua does not seem to provide it)")
+            print("Possible reasons:")
+            print(" - symbolic link was not created")
+            print(" - the 'all_in_one_publisher.py' script is not running")
             return
         end
 
