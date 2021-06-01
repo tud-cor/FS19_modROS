@@ -294,7 +294,8 @@ function ModROS:publish_laser_scan_func()
         -- get the cooridante(world) of each laser scanner's origin
         -- "mod_config.laser_scan.inter_layer_distance" is added between the scanning planes, along +y direction from the lowest laser scan plane
         -- and all laser scan planes are parallel to each other
-        local orig_x, orig_y, orig_z = localToWorld(self.instance_veh.cameraNode, 0, mod_config.laser_scan.inter_layer_distance * i, 0)
+        local laser_dy = mod_config.laser_scan.inter_layer_distance * i
+        local orig_x, orig_y, orig_z = localToWorld(self.instance_veh.cameraNode, 0, laser_dy, 0)
         for j = 0, (mod_config.laser_scan.num_rays - 1) do
             local seg_theta = j * delta_theta
             -- i_laser_dx, 0 , i_laser_dz is a point to define the raycasting direction
