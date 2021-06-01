@@ -349,7 +349,7 @@ function ModROS:publish_laser_scan_func()
             -- note the order of the axes here (see earlier comment about FS chirality)
             base_to_laser_z,
             base_to_laser_x,
-            base_to_laser_y + laser_dy * i,
+            base_to_laser_y + laser_dy,
             -- we don't need to swap the order of q, since the calculation of q is based on the ROS chirality
             q[1],
             q[2],
