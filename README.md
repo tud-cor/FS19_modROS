@@ -9,6 +9,14 @@ The mod itself is hosted in this repository.
 [tud-cor/fs_mod_ros](https://github.com/tud-cor/fs_mod_ros) contains two example ROS packages which show how to interact with FarmSim19 running `modROS`.
 
 
+## ⚠️ Warning and disclaimer
+
+`modROS` uses memory modification techniques which *could* be considered harmful by anti-cheat systems which are often included in games with on-line gameplay.
+
+While the manifest clearly marks `modROS` as incompatible with multiplayer game sessions, and the authors have not experienced any problems so far, we feel we must warn users and strongly recommend against ever trying to enable the mod in multiplayer games, nor run any of the scripts in [tud-cor/fs_mod_ros_windows](https://github.com/tud-cor/fs_mod_ros_windows) while playing on-line.
+Users cannot hold the authors of `modROS` responsible for loss of (on-line or other) functionality in Farming Simulator 19, nor for any damages related to or as a consequence of such loss of functionality.
+
+
 ## Status
 
 Some parts are still under development.
