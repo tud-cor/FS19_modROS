@@ -317,7 +317,7 @@ function ModROS:publish_laser_scan_func()
         -- create LaserScan instance
         local scan_msg = sensor_msgs_LaserScan:init()
 
-        -- populate fields (not using Odometry:set(..) here as this is much
+        -- populate fields (not using LaserScan:set(..) here as this is much
         -- more readable than a long list of anonymous args)
         scan_msg.header.frame_id = "laser_frame_" .. i
         scan_msg.header.stamp = t
