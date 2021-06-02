@@ -29,7 +29,8 @@ mod_config =
     angle_max = math.pi,
     range_min = 0.1,
     range_max = 30,
-    ignore_terrain = true
+    ignore_terrain = true,
+    inter_layer_distance = 0.1
   }
 }
 
