@@ -39,7 +39,7 @@ mod_config =
           z = 0.0
       },
       rotation = {
-          x = -math.pi/6,
+          x = math.pi/6,
           y = 0.0,
           z = 0.0
       }
