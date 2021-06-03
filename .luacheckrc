@@ -2410,7 +2410,8 @@ stds.modROS = {
         "tf2_msgs_TFMessage",
         "vehicle_util",
         "ros_names",
-        "mod_config"
+        "mod_config",
+        "frames"
     }
 }
 

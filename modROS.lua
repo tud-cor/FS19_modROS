@@ -74,15 +74,6 @@ local function center_camera_func()
     camera.rotY = camera.origRotY
 end
 
-local function createAttachedNode(parentNodeId, transformName, tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
-    local node = createTransformGroup(transformName)
-    link(parentNodeId, node)
-    -- apply a transfrom to node
-    setTranslation(node, tran_x, tran_y, tran_z)
-    setRotation(node, rot_x, rot_y, rot_z)
-    return node
-end
-
 local ModROS = {}
 ModROS.modDirectory = g_currentModDirectory
 
