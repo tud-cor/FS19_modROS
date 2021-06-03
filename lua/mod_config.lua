@@ -39,7 +39,8 @@ mod_config =
           z = 0.0
       },
       rotation = {
-          x = math.pi/6,
+          -- positive rotation over X rotates laser scanner down (ie: math.pi/6)
+          x = 0.0,
           y = 0.0,
           z = 0.0
       }
