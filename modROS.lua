@@ -408,10 +408,14 @@ function ModROS:publish_imu_func()
     -- check getVelocityAtWorldPos and getVelocityAtLocalPos
     -- local linear vel: Get velocity at local position of transform object; "getLinearVelocity" is the the velocity wrt world frame
     -- local l_v_z max is around 8(i guess the unit is m/s here) when reach 30km/hr(shown in speed indicator)
-    -- TODO add condition to filter out the vehicle: train because it does not have velocity info
     local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
     -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
 
+    -- TODO add condition to filter out the vehicle: train because it does not have velocity info
+    -- for now we'll just use 0.0 as a replacement value
+    if not l_v_x then l_v_x = 0.0 end
+    if not l_v_y then l_v_y = 0.0 end
+    if not l_v_z then l_v_z = 0.0 end
 
     -- calculation of linear acceleration in x,y,z directions
     local acc_x = (l_v_x - self.l_v_x_0) / (g_currentMission.environment.dayTime / 1000 - self.sec)
