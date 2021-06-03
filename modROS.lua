@@ -295,13 +295,13 @@ function ModROS:publish_laser_scan_func()
     local cos = math.cos
     local sin = math.sin
     local LS_FOV = mod_config.laser_scan.angle_max - mod_config.laser_scan.angle_min
-
     -- calculate nr of steps between rays
     local delta_theta = LS_FOV / (mod_config.laser_scan.num_rays - 1)
+
     for i = 0, mod_config.laser_scan.num_layers-1 do
         self.laser_scan_array = {}
-        -- get the (world) coordinate of each laser scanner's origin
-        -- "laser_dy" is added between the scanning planes, along +y direction from the lowest laser scan plane
+        -- get the (world) coordinate of each laser scanner's origin: (orig_x, orig_y, orig_z)
+        -- "laser_dy" is added between the scanning planes, along +y direction (locally) from the lowest laser scan plane
         -- and all laser scan planes are parallel to each other
         local laser_dy = mod_config.laser_scan.inter_layer_distance * i
         local orig_x, orig_y, orig_z = localToWorld(self.laser_frame_1, 0, laser_dy, 0)
@@ -343,10 +343,10 @@ function ModROS:publish_laser_scan_func()
 
         -- convert to quaternion for ROS TF
         -- note the order of the axes here (see earlier comment about FS chirality)
-        -- the rotation from base_link to raycastnode is the same as rotation from raycastnode to virtaul laser_frame as there is no rotation between base_link to raycastnode
+        -- the rotation from base_link to raycastnode is the same as rotation from raycastnode to virtaul laser_frame_i as there is no rotation between base_link to raycastnode
         local q = ros_quaternion.from_euler(mod_config.laser_scan.laser_transform.rotation.z, mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y)
 
-        -- get the tf from base_link to all laser frames
+        -- get the translation from base_link to laser_frame_i
         -- laser_dy is the offset from laser_frame_i to laser_frame_i+1
         local base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(self.laser_frame_1, g_currentMission.controlledVehicle.components[1].node, 0, laser_dy, 0)
 
@@ -538,7 +538,7 @@ function ModROS:rosPubMsg(flag)
 
         -- create self.laser_frame_1 attached to raycastNode (x left, y up, z into the page)
         -- and apply a transform to the self.laser_frame_1
-        local tran_x, tran_y, tran_z = mod_config.laser_scan.laser_transform.translation.x,  mod_config.laser_scan.laser_transform.translation.y,  mod_config.laser_scan.laser_transform.translation.z
+        local tran_x, tran_y, tran_z = mod_config.laser_scan.laser_transform.translation.x, mod_config.laser_scan.laser_transform.translation.y, mod_config.laser_scan.laser_transform.translation.z
         local rot_x, rot_y, rot_z = mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y, mod_config.laser_scan.laser_transform.rotation.z
         self.laser_frame_1 = createAttachedNode(self.instance_veh.cameraNode, "self.laser_frame_1", tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
 
