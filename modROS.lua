@@ -66,6 +66,7 @@ source(Utils.getFilename("lua/ros_time.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/vehicle_util.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/ros_names.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/mod_config.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/frames.lua", g_currentModDirectory))
 
 local function center_camera_func()
     local camIdx = g_currentMission.controlledVehicle.spec_enterable.camIndex
@@ -531,7 +532,7 @@ function ModROS:rosPubMsg(flag)
         -- and apply a transform to the self.laser_frame_1
         local tran_x, tran_y, tran_z = mod_config.laser_scan.laser_transform.translation.x, mod_config.laser_scan.laser_transform.translation.y, mod_config.laser_scan.laser_transform.translation.z
         local rot_x, rot_y, rot_z = mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y, mod_config.laser_scan.laser_transform.rotation.z
-        self.laser_frame_1 = createAttachedNode(self.instance_veh.cameraNode, "self.laser_frame_1", tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
+        self.laser_frame_1 = frames.create_attached_node(self.instance_veh.cameraNode, "self.laser_frame_1", tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
 
     elseif flag == nil or flag == "" or flag == "false" then
         self.doPubMsg = false
