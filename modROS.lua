@@ -286,6 +286,14 @@ function ModROS:publish_laser_scan_func()
     local cos = math.cos
     local sin = math.sin
     local LS_FOV = mod_config.laser_scan.angle_max - mod_config.laser_scan.angle_min
+    -- adding the first laser scan frame to raycastNode (x left, y up, z into the page)
+    local laser_scan_frame_1 = createTransformGroup("laser_scan_frame_1")
+    link(self.instance_veh.cameraNode, laser_scan_frame_1)
+    -- apply a transfrom to laser_scan_frame_1
+    local x, y, z = 0, 0, 0
+    local rot_x, rot_y, rot_z = -math.pi/6, 0, 0
+    setTranslation(laser_scan_frame_1, x, y, z)
+    setRotation(laser_scan_frame_1, rot_x, rot_y, rot_z)
 
     -- calculate nr of steps between rays
     local delta_theta = LS_FOV / (mod_config.laser_scan.num_rays - 1)
@@ -295,15 +303,14 @@ function ModROS:publish_laser_scan_func()
         -- "laser_dy" is added between the scanning planes, along +y direction from the lowest laser scan plane
         -- and all laser scan planes are parallel to each other
         local laser_dy = mod_config.laser_scan.inter_layer_distance * i
-        local orig_x, orig_y, orig_z = localToWorld(self.instance_veh.cameraNode, 0, laser_dy, 0)
+        local orig_x, orig_y, orig_z = localToWorld(laser_scan_frame_1, 0, laser_dy, 0)
+
         for j = 0, (mod_config.laser_scan.num_rays - 1) do
             local seg_theta = j * delta_theta
-            -- i_laser_dx, 0 , i_laser_dz is a point to define the raycasting direction
-            -- from point self.instance_veh.cameraNode to point (i_laser_dx, 0, i_laser_dz) is the raycast direction
+            -- (i_laser_dx, 0 , i_laser_dz) is a local space direction to define the world space raycasting (scanning) direction
             local i_laser_dx =  -sin(seg_theta) * radius
             local i_laser_dz =  -cos(seg_theta) * radius
-            local dx, dy, dz =
-                localDirectionToWorld(self.instance_veh.cameraNode, i_laser_dx, 0 , i_laser_dz)
+            local dx, dy, dz = localDirectionToWorld(laser_scan_frame_1, i_laser_dx, 0 , i_laser_dz)
             self:laser_data_gen(orig_x, orig_y, orig_z, dx, dy, dz)
         end
 
@@ -334,11 +341,11 @@ function ModROS:publish_laser_scan_func()
         self.file_pipe:write(sensor_msgs_LaserScan.ros_msg_name .. "\n" .. scan_msg:to_json())
 
         -- convert to quaternion for ROS TF
-        local q = ros_quaternion.from_euler(0, 0, 0)
-
+        -- note the order of the axes here (see earlier comment about FS chirality)
+        local q = ros_quaternion.from_euler(rot_z, rot_x, rot_y)
 
         -- get the tf from base_link to all laser frames
-        local base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(self.instance_veh.cameraNode, g_currentMission.controlledVehicle.components[1].node, 0, 0, 0)
+        local base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(laser_scan_frame_1, g_currentMission.controlledVehicle.components[1].node, 0, laser_dy, 0)
 
         -- create single TransformStamped message
         local tf_base_link_laser_frame_i = geometry_msgs_TransformStamped:init()
@@ -349,7 +356,7 @@ function ModROS:publish_laser_scan_func()
             -- note the order of the axes here (see earlier comment about FS chirality)
             base_to_laser_z,
             base_to_laser_x,
-            base_to_laser_y + laser_dy,
+            base_to_laser_y,
             -- we don't need to swap the order of q, since the calculation of q is based on the ROS chirality
             q[1],
             q[2],
