@@ -74,6 +74,15 @@ local function center_camera_func()
     camera.rotY = camera.origRotY
 end
 
+local function createAttachedNode(parentNodeId, transformName, tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
+    local node = createTransformGroup(transformName)
+    link(parentNodeId, node)
+    -- apply a transfrom to node
+    setTranslation(node, tran_x, tran_y, tran_z)
+    setRotation(node, rot_x, rot_y, rot_z)
+    return node
+end
+
 local ModROS = {}
 ModROS.modDirectory = g_currentModDirectory
 
@@ -286,14 +295,6 @@ function ModROS:publish_laser_scan_func()
     local cos = math.cos
     local sin = math.sin
     local LS_FOV = mod_config.laser_scan.angle_max - mod_config.laser_scan.angle_min
-    -- adding the first laser scan frame to raycastNode (x left, y up, z into the page)
-    local laser_scan_frame_1 = createTransformGroup("laser_scan_frame_1")
-    link(self.instance_veh.cameraNode, laser_scan_frame_1)
-    -- apply a transfrom to laser_scan_frame_1
-    local x, y, z = 0, 0, 0
-    local rot_x, rot_y, rot_z = -math.pi/6, 0, 0
-    setTranslation(laser_scan_frame_1, x, y, z)
-    setRotation(laser_scan_frame_1, rot_x, rot_y, rot_z)
 
     -- calculate nr of steps between rays
     local delta_theta = LS_FOV / (mod_config.laser_scan.num_rays - 1)
