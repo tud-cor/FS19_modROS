@@ -301,8 +301,8 @@ function ModROS:publish_laser_scan_func()
         for j = 0, (mod_config.laser_scan.num_rays - 1) do
             local seg_theta = j * delta_theta
             -- (i_laser_dx, 0 , i_laser_dz) is a local space direction to define the world space raycasting (scanning) direction
-            local i_laser_dx =  -sin(seg_theta) * radius
-            local i_laser_dz =  -cos(seg_theta) * radius
+            local i_laser_dx = -sin(seg_theta) * radius
+            local i_laser_dz = -cos(seg_theta) * radius
             local dx, dy, dz = localDirectionToWorld(self.laser_frame_1, i_laser_dx, 0 , i_laser_dz)
             self:laser_data_gen(orig_x, orig_y, orig_z, dx, dy, dz)
         end
