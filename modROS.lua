@@ -490,7 +490,6 @@ end
 addConsoleCommand("rosPubMsg", "write ros messages to named pipe", "rosPubMsg", ModROS)
 function ModROS:rosPubMsg(flag)
     if flag ~= nil and flag ~= "" and flag == "true" then
-        self.doPubMsg = true
         self.path = ModROS.modDirectory .. "ROS_messages"
 
         print("connecting to named pipe")
@@ -544,6 +543,9 @@ function ModROS:rosPubMsg(flag)
             local rot_x, rot_y, rot_z = mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y, mod_config.laser_scan.laser_transform.rotation.z
             self.laser_frame_1 = frames.create_attached_node(self.instance_veh.cameraNode, "self.laser_frame_1", tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
         end
+
+        -- initialisation was successful
+        self.doPubMsg = true
 
     elseif flag == nil or flag == "" or flag == "false" then
         self.doPubMsg = false
