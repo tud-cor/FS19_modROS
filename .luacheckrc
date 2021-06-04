@@ -2,6 +2,9 @@
 
 std = "lua51+fs19_vars+fs19_other+fs19_funcs+modROS+ext_deps"
 
+-- don't complain about unused self args
+self = false
+
 ignore = {
 	-- "211", -- unused local variable
 	-- "212", -- unused argument
