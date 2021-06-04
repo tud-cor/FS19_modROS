@@ -110,7 +110,8 @@ function ModROS:update(dt)
 
     if self.doPubMsg then
         -- avoid writing to the pipe if it isn't actually open
-        if self.file_pipe then
+        -- avoid publishing data if one is not inside a vehicle
+        if self.file_pipe and g_currentMission.controlledVehicle ~= nil then
             self:publish_sim_time_func()
             self:publish_veh_func()
             self:publish_laser_scan_func()
@@ -537,13 +538,12 @@ function ModROS:rosPubMsg(flag)
             -- else
             --     print(instance_veh.cameraNode)
             end
+            -- create self.laser_frame_1 attached to raycastNode (x left, y up, z into the page)
+            -- and apply a transform to the self.laser_frame_1
+            local tran_x, tran_y, tran_z = mod_config.laser_scan.laser_transform.translation.x, mod_config.laser_scan.laser_transform.translation.y, mod_config.laser_scan.laser_transform.translation.z
+            local rot_x, rot_y, rot_z = mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y, mod_config.laser_scan.laser_transform.rotation.z
+            self.laser_frame_1 = frames.create_attached_node(self.instance_veh.cameraNode, "self.laser_frame_1", tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
         end
-
-        -- create self.laser_frame_1 attached to raycastNode (x left, y up, z into the page)
-        -- and apply a transform to the self.laser_frame_1
-        local tran_x, tran_y, tran_z = mod_config.laser_scan.laser_transform.translation.x, mod_config.laser_scan.laser_transform.translation.y, mod_config.laser_scan.laser_transform.translation.z
-        local rot_x, rot_y, rot_z = mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y, mod_config.laser_scan.laser_transform.rotation.z
-        self.laser_frame_1 = frames.create_attached_node(self.instance_veh.cameraNode, "self.laser_frame_1", tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
 
     elseif flag == nil or flag == "" or flag == "false" then
         self.doPubMsg = false
