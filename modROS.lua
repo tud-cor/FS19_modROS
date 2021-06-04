@@ -492,19 +492,21 @@ function ModROS:rosPubMsg(flag)
     if flag ~= nil and flag ~= "" and flag == "true" then
         self.path = ModROS.modDirectory .. "ROS_messages"
 
-        print("connecting to named pipe")
-        self.file_pipe = io.open(self.path, "w")
+        if not self.file_pipe then
+            print("connecting to named pipe")
+            self.file_pipe = io.open(self.path, "w")
 
-        -- check we could open the pipe
-        if self.file_pipe then
-            print("Opened '" .. self.path .. "'")
-        else
-            -- if not, print error to console and return
-            print("Could not open named pipe: unknown reason (FS Lua does not seem to provide it)")
-            print("Possible reasons:")
-            print(" - symbolic link was not created")
-            print(" - the 'all_in_one_publisher.py' script is not running")
-            return
+            -- check we could open the pipe
+            if self.file_pipe then
+                print("Opened '" .. self.path .. "'")
+            else
+                -- if not, print error to console and return
+                print("Could not open named pipe: unknown reason (FS Lua does not seem to provide it)")
+                print("Possible reasons:")
+                print(" - symbolic link was not created")
+                print(" - the 'all_in_one_publisher.py' script is not running")
+                return
+            end
         end
 
         -- raycastNode initialization
