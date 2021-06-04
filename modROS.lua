@@ -507,29 +507,36 @@ function ModROS:rosPubMsg(flag)
             return
         end
 
+        -- raycastNode initialization
         local vehicle = g_currentMission.controlledVehicle
-        self.instance_veh = VehicleCamera:new(vehicle, ModROS)
-        local xml_path = self.instance_veh.vehicle.configFileName
-        local xmlFile = loadXMLFile("vehicle", xml_path)
-        -- index 0 is outdoor camera; index 1 is indoor camera
-        -- local cameraKey = string.format("vehicle.enterable.cameras.camera(%d)", 0)
+        -- if the player is not in the vehicle, print error and return
+        if not vehicle then
+            print("You are not inside any vehicle, come on! Enter 'e' to hop in one next to you!")
+            return
+        else
+            self.instance_veh = VehicleCamera:new(vehicle, ModROS)
+            local xml_path = self.instance_veh.vehicle.configFileName
+            local xmlFile = loadXMLFile("vehicle", xml_path)
+            -- index 0 is outdoor camera; index 1 is indoor camera
+            -- local cameraKey = string.format("vehicle.enterable.cameras.camera(%d)", 0)
 
-        --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
-        --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)
+            --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
+            --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)
 
-        local cameraKey = string.format("vehicle.enterable.cameras.camera(%d).raycastNode(0)", 0)
-        XMLUtil.checkDeprecatedXMLElements(xmlFile, xml_path, cameraKey .. "#index", "#node") -- FS17 to FS19
-        local camIndexStr = getXMLString(xmlFile, cameraKey .. "#node")
-        self.instance_veh.cameraNode =
-            I3DUtil.indexToObject(
-            self.instance_veh.vehicle.components,
-            camIndexStr,
-            self.instance_veh.vehicle.i3dMappings
-        )
-        if self.instance_veh.cameraNode == nil then
-            print("nil camera")
-        -- else
-        --     print(instance_veh.cameraNode)
+            local cameraKey = string.format("vehicle.enterable.cameras.camera(%d).raycastNode(0)", 0)
+            XMLUtil.checkDeprecatedXMLElements(xmlFile, xml_path, cameraKey .. "#index", "#node") -- FS17 to FS19
+            local camIndexStr = getXMLString(xmlFile, cameraKey .. "#node")
+            self.instance_veh.cameraNode =
+                I3DUtil.indexToObject(
+                self.instance_veh.vehicle.components,
+                camIndexStr,
+                self.instance_veh.vehicle.i3dMappings
+            )
+            if self.instance_veh.cameraNode == nil then
+                print("nil camera")
+            -- else
+            --     print(instance_veh.cameraNode)
+            end
         end
 
         -- create self.laser_frame_1 attached to raycastNode (x left, y up, z into the page)
