@@ -62,9 +62,7 @@ source(Utils.getFilename("lua/msgs/tf2_msgs_tf_message.lua", g_currentModDirecto
 source(Utils.getFilename("lua/frames.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/json.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/mod_config.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/ros_names.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/ros_quaternion.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/ros_time.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/ros.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/shared_memory_segment.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/vehicle_util.lua", g_currentModDirectory))
 
@@ -146,7 +144,7 @@ end
 --]]
 function ModROS:publish_sim_time_func()
     local msg = rosgraph_msgs_Clock:init()
-    msg.clock = ros_time.now()
+    msg.clock = ros.Time.now()
     self.file_pipe:write(rosgraph_msgs_Clock.ros_msg_name .. "\n" .. msg:to_json())
 end
 
@@ -167,7 +165,7 @@ function ModROS:publish_veh_func()
     for _, vehicle in pairs(g_currentMission.vehicles) do
 
         -- legalize a name for ROS
-        local vehicle_name = ros_names.sanatize(vehicle:getFullName() .. "_" .. vehicle.id)
+        local vehicle_name = ros.Names.sanatize(vehicle:getFullName() .. "_" .. vehicle.id)
 
         -- retrieve the vehicle node we're interested in
         local veh_node = vehicle.components[1].node
@@ -190,7 +188,7 @@ function ModROS:publish_veh_func()
 
         -- FS time is "frozen" within a single call to update(..), so this
         -- will assign the same stamp to all Odometry messages
-        local t = ros_time.now()
+        local t = ros.Time.now()
 
         -- create nav_msgs/Odometry instance
         local odom_msg = nav_msgs_Odometry:init()
@@ -310,7 +308,7 @@ function ModROS:publish_laser_scan_func()
 
         -- FS time is "frozen" within a single call to update(..), so this
         -- will assign the same stamp to all LaserScan messages
-        local t = ros_time.now()
+        local t = ros.Time.now()
 
         -- create LaserScan instance
         local scan_msg = sensor_msgs_LaserScan:init()
@@ -337,7 +335,7 @@ function ModROS:publish_laser_scan_func()
         -- convert to quaternion for ROS TF
         -- note the order of the axes here (see earlier comment about FS chirality)
         -- the rotation from base_link to raycastnode is the same as rotation from raycastnode to virtaul laser_frame_i as there is no rotation between base_link to raycastnode
-        local q = ros_quaternion.from_euler(mod_config.laser_scan.laser_transform.rotation.z, mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y)
+        local q = ros.Transformations.quaternion_from_euler(mod_config.laser_scan.laser_transform.rotation.z, mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y)
 
         -- get the translation from base_link to laser_frame_i
         -- laser_dy is the offset from laser_frame_i to laser_frame_i+1
@@ -436,7 +434,7 @@ function ModROS:publish_imu_func()
     -- populate fields (not using sensor_msgs_Imu:set(..) here as this is much
     -- more readable than a long list of anonymous args)
     imu_msg.header.frame_id = "base_link"
-    imu_msg.header.stamp = ros_time.now()
+    imu_msg.header.stamp = ros.Time.now()
     -- note the order of the axes here (see earlier comment about FS chirality)
     imu_msg.orientation.x = q_z
     imu_msg.orientation.y = q_x
