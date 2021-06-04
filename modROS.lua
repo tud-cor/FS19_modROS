@@ -78,7 +78,7 @@ end
 local ModROS = {}
 ModROS.modDirectory = g_currentModDirectory
 
-function ModROS:loadMap(name)
+function ModROS:loadMap()
     self.version = g_modManager.nameToMod["modROS"]["version"]
     self.counter = 0
     self.last_read = ""
