@@ -556,7 +556,7 @@ function ModROS:rosPubMsg(flag)
         if self.file_pipe then
             self.file_pipe:close()
             self.file_pipe = nil
-            print("closing named pipe")
+            print("closed named pipe")
         end
     end
 end
