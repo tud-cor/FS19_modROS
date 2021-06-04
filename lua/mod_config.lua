@@ -30,7 +30,21 @@ mod_config =
     range_min = 0.1,
     range_max = 30,
     ignore_terrain = true,
-    inter_layer_distance = 0.1
+    inter_layer_distance = 0.1,
+    -- apply a transform to first laser scan frame
+    laser_transform = {
+      translation = {
+          x = 0.0,
+          y = 0.0,
+          z = 0.0
+      },
+      rotation = {
+          -- positive rotation over X rotates laser scanner down (ie: math.pi/6)
+          x = 0.0,
+          y = 0.0,
+          z = 0.0
+      }
+    }
   }
 }
 
