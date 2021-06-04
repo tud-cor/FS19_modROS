@@ -11,6 +11,30 @@ ignore = {
 -- don't complain about files not under our control
 exclude_files = {"lua/json.lua", "lua/shared_memory_segment.lua"}
 
+stds.modROS = {
+    globals = {
+        "geometry_msgs_TransformStamped",
+        "nav_msgs_Odometry",
+        "ros_quaternion",
+        "ros_time",
+        "rosgraph_msgs_Clock",
+        "sensor_msgs_Imu",
+        "sensor_msgs_LaserScan",
+        "tf2_msgs_TFMessage",
+        "vehicle_util",
+        "ros_names",
+        "mod_config",
+        "frames",
+    }
+}
+
+stds.ext_deps = {
+    globals = {
+        "json",
+        "SharedMemorySegment"
+    }
+}
+
 -- globals based on: https://github.com/scfmod/fs19_lua/blob/master/dump.lua
 stds.fs19_vars = {
     globals = {
@@ -2398,29 +2422,5 @@ stds.fs19_funcs = {
         "writeTerrainUpdateStream",
         "writeTrafficSystemToStream",
         "xpcall",
-    }
-}
-
-stds.modROS = {
-    globals = {
-        "geometry_msgs_TransformStamped",
-        "nav_msgs_Odometry",
-        "ros_quaternion",
-        "ros_time",
-        "rosgraph_msgs_Clock",
-        "sensor_msgs_Imu",
-        "sensor_msgs_LaserScan",
-        "tf2_msgs_TFMessage",
-        "vehicle_util",
-        "ros_names",
-        "mod_config",
-        "frames"
-    }
-}
-
-stds.ext_deps = {
-    globals = {
-        "json",
-        "SharedMemorySegment"
     }
 }
