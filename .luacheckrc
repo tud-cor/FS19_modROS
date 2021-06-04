@@ -1,4 +1,3 @@
--- globals based on: https://github.com/scfmod/fs19_lua/blob/master/dump.lua
 
 std = "lua51+fs19_vars+fs19_other+fs19_funcs+modROS+ext_deps"
 
@@ -6,15 +5,13 @@ std = "lua51+fs19_vars+fs19_other+fs19_funcs+modROS+ext_deps"
 self = false
 
 ignore = {
-	-- "211", -- unused local variable
-	-- "212", -- unused argument
-	-- "213", -- unused loop variable
 	"631" -- line too long
 }
 
 -- don't complain about files not under our control
 exclude_files = {"lua/json.lua", "lua/shared_memory_segment.lua"}
 
+-- globals based on: https://github.com/scfmod/fs19_lua/blob/master/dump.lua
 stds.fs19_vars = {
     globals = {
     },
