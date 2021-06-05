@@ -54,19 +54,19 @@ maintainer: Ting-Chia Chiang, G.A. vd. Hoorn
 --]]
 
 
+source(Utils.getFilename("lua/msgs/nav_msgs_odometry.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/msgs/rosgraph_msgs_clock.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/msgs/sensor_msgs_imu.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/msgs/sensor_msgs_laser_scan.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/msgs/tf2_msgs_tf_message.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/frames.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/json.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/shared_memory_segment.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/nav_msgs_odometry.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/rosgraph_msgs_clock.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/sensor_msgs_imu.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/sensor_msgs_laser_scan.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/tf2_msgs_tf_message.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/mod_config.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/ros_names.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/ros_quaternion.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/ros_time.lua", g_currentModDirectory))
+source(Utils.getFilename("lua/shared_memory_segment.lua", g_currentModDirectory))
 source(Utils.getFilename("lua/vehicle_util.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/ros_names.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/mod_config.lua", g_currentModDirectory))
-source(Utils.getFilename("lua/frames.lua", g_currentModDirectory))
 
 local function center_camera_func()
     local camIdx = g_currentMission.controlledVehicle.spec_enterable.camIndex
