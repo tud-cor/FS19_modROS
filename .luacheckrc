@@ -15,14 +15,12 @@ stds.modROS = {
     globals = {
         "geometry_msgs_TransformStamped",
         "nav_msgs_Odometry",
-        "ros_quaternion",
-        "ros_time",
+        "ros",
         "rosgraph_msgs_Clock",
         "sensor_msgs_Imu",
         "sensor_msgs_LaserScan",
         "tf2_msgs_TFMessage",
         "vehicle_util",
-        "ros_names",
         "mod_config",
         "frames",
     }
