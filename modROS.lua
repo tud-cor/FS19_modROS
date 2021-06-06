@@ -488,22 +488,23 @@ end
 addConsoleCommand("rosPubMsg", "write ros messages to named pipe", "rosPubMsg", ModROS)
 function ModROS:rosPubMsg(flag)
     if flag ~= nil and flag ~= "" and flag == "true" then
-        self.doPubMsg = true
         self.path = ModROS.modDirectory .. "ROS_messages"
 
-        print("connecting to named pipe")
-        self.file_pipe = io.open(self.path, "w")
+        if not self.file_pipe then
+            print("connecting to named pipe")
+            self.file_pipe = io.open(self.path, "w")
 
-        -- check we could open the pipe
-        if self.file_pipe then
-            print("Opened '" .. self.path .. "'")
-        else
-            -- if not, print error to console and return
-            print("Could not open named pipe: unknown reason (FS Lua does not seem to provide it)")
-            print("Possible reasons:")
-            print(" - symbolic link was not created")
-            print(" - the 'all_in_one_publisher.py' script is not running")
-            return
+            -- check we could open the pipe
+            if self.file_pipe then
+                print("Opened '" .. self.path .. "'")
+            else
+                -- if not, print error to console and return
+                print("Could not open named pipe: unknown reason (FS Lua does not seem to provide it)")
+                print("Possible reasons:")
+                print(" - symbolic link was not created")
+                print(" - the 'all_in_one_publisher.py' script is not running")
+                return
+            end
         end
 
         -- raycastNode initialization
@@ -543,13 +544,17 @@ function ModROS:rosPubMsg(flag)
             self.laser_frame_1 = frames.create_attached_node(self.instance_veh.cameraNode, "self.laser_frame_1", tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
         end
 
+        -- initialisation was successful
+        self.doPubMsg = true
+
     elseif flag == nil or flag == "" or flag == "false" then
         self.doPubMsg = false
         print("stop publishing data, set true, if you want to publish Pose")
 
         if self.file_pipe then
             self.file_pipe:close()
-            print("closing named pipe")
+            self.file_pipe = nil
+            print("closed named pipe")
         end
     end
 end
