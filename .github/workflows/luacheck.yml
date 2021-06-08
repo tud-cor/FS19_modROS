@@ -17,7 +17,7 @@ jobs:
       - name: Run luacheck
         uses: nebularg/actions-luacheck@v1
         with:
-          files: lua/ modROS.lua
+          files: src/
           annotate: warning
           # ignore vehicle_utils.lua only in the CI config (not our main
           # luacheckrc). We ignore it until we fix it (bad), but get reminded
