@@ -27,6 +27,7 @@ g_modROSModDirectory = directory
 g_modROSModName = modName
 
 -- ROS 'messages'
+source(Utils.getFilename("src/msgs/geometry_msgs_transform_stamped.lua", directory))
 source(Utils.getFilename("src/msgs/nav_msgs_odometry.lua", directory))
 source(Utils.getFilename("src/msgs/rosgraph_msgs_clock.lua", directory))
 source(Utils.getFilename("src/msgs/sensor_msgs_imu.lua", directory))
