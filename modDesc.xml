@@ -13,7 +13,7 @@
     </description>
     <author>tckarenchiang</author>
     <version>0.0.1.0</version>
-    <iconFilename>store.png</iconFilename>
+    <iconFilename>store.dds</iconFilename>
     <multiplayer supported="false"/>
     <extraSourceFiles>
         <sourceFile filename="src/loader.lua"/>
