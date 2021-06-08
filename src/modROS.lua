@@ -53,6 +53,10 @@ maintainer: Ting-Chia Chiang, G.A. vd. Hoorn
 
 --]]
 
+local ModROS = {}
+ModROS.MOD_DIR = g_modROSModDirectory
+ModROS.MOD_NAME = g_modROSModName
+ModROS.MOD_VERSION = g_modManager.nameToMod[ModROS.MOD_NAME]["version"]
 
 local function center_camera_func()
     local camIdx = g_currentMission.controlledVehicle.spec_enterable.camIndex
@@ -61,11 +65,7 @@ local function center_camera_func()
     camera.rotY = camera.origRotY
 end
 
-local ModROS = {}
-ModROS.modDirectory = g_currentModDirectory
-
 function ModROS:loadMap()
-    self.version = g_modManager.nameToMod["modROS"]["version"]
     self.counter = 0
     self.last_read = ""
     self.buf = SharedMemorySegment:init(64)
@@ -85,7 +85,7 @@ function ModROS:loadMap()
     local RC_MASK_DYN_OBJS = math.pow(2, 12)
     self.raycastMask = RC_MASK_UNKNOWN5 + RC_MASK_TRACTORS + RC_MASK_COMBINES + RC_MASK_TRAILERS + RC_MASK_DYN_OBJS
 
-    print("modROS (" .. self.version .. ") loaded")
+    print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
 end
 
 function ModROS:update(dt)
@@ -476,7 +476,7 @@ end
 addConsoleCommand("rosPubMsg", "write ros messages to named pipe", "rosPubMsg", ModROS)
 function ModROS:rosPubMsg(flag)
     if flag ~= nil and flag ~= "" and flag == "true" then
-        self.path = ModROS.modDirectory .. "ROS_messages"
+        self.path = ModROS.MOD_DIR .. "ROS_messages"
 
         if not self.file_pipe then
             print("connecting to named pipe")
