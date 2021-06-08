@@ -13,6 +13,8 @@ exclude_files = {"lua/json.lua", "lua/shared_memory_segment.lua"}
 
 stds.modROS = {
     globals = {
+        "g_modROSModDirectory",
+        "g_modROSModName",
         "geometry_msgs_TransformStamped",
         "nav_msgs_Odometry",
         "ros",
@@ -95,6 +97,7 @@ stds.fs19_vars = {
         "g_currentDt",
         "g_currentMission",
         "g_currentModDirectory",   -- not listed on https://github.com/scfmod/fs19_lua/blob/master/dump.lua
+        "g_currentModName",   -- not listed on https://github.com/scfmod/fs19_lua/blob/master/dump.lua
         "g_cutterEffectManager",
         "g_debugManager",
         "g_dedicatedServerMaxFrameLimit",
