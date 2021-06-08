@@ -22,4 +22,4 @@ jobs:
           # ignore vehicle_utils.lua only in the CI config (not our main
           # luacheckrc). We ignore it until we fix it (bad), but get reminded
           # about it needing fixes on every local luacheck run.
-          args: --exclude-files lua/vehicle_util.lua
+          args: --exclude-files src/utils//vehicle_util.lua

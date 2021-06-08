@@ -9,7 +9,7 @@ ignore = {
 }
 
 -- don't complain about files not under our control
-exclude_files = {"lua/json.lua", "lua/shared_memory_segment.lua"}
+exclude_files = {"src/utils/json.lua", "src/utils/shared_memory_segment.lua"}
 
 stds.modROS = {
     globals = {
