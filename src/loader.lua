@@ -34,13 +34,13 @@ source(Utils.getFilename("src/msgs/sensor_msgs_laser_scan.lua", directory))
 source(Utils.getFilename("src/msgs/tf2_msgs_tf_message.lua", directory))
 
 -- third party utilities
-source(Utils.getFilename("src/json.lua", directory))
-source(Utils.getFilename("src/shared_memory_segment.lua", directory))
-source(Utils.getFilename("src/vehicle_util.lua", directory))
+source(Utils.getFilename("src/utils/json.lua", directory))
+source(Utils.getFilename("src/utils/shared_memory_segment.lua", directory))
+source(Utils.getFilename("src/utils/vehicle_util.lua", directory))
 
 -- our own utilities
-source(Utils.getFilename("src/frames.lua", directory))
-source(Utils.getFilename("src/ros.lua", directory))
+source(Utils.getFilename("src/utils/frames.lua", directory))
+source(Utils.getFilename("src/utils/ros.lua", directory))
 
 -- main/default configuration
 -- TODO: add UI for all of this
