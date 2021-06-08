@@ -16,7 +16,7 @@
     <iconFilename>store.png</iconFilename>
     <multiplayer supported="false"/>
     <extraSourceFiles>
-        <sourceFile filename="modROS.lua"/>
+        <sourceFile filename="src/loader.lua"/>
     </extraSourceFiles>
 </modDesc>
 
