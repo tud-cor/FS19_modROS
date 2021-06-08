@@ -19,30 +19,33 @@ author: G.A. vd. Hoorn
 
 -- sensor_msgs_LaserScan class
 sensor_msgs_LaserScan = {}
-sensor_msgs_LaserScan.__index = sensor_msgs_LaserScan
+sensor_msgs_LaserScan.ROS_MSG_NAME = "sensor_msgs/LaserScan"
 
-sensor_msgs_LaserScan.ros_msg_name = "sensor_msgs/LaserScan"
+local sensor_msgs_LaserScan_mt = Class(sensor_msgs_LaserScan)
 
-function sensor_msgs_LaserScan:init()
-    local obj = {}
-    setmetatable(obj, sensor_msgs_LaserScan)
+function sensor_msgs_LaserScan.new()
+    local self = {}
+    setmetatable(self, sensor_msgs_LaserScan_mt)
 
     -- fields as defined by sensor_msgs/LaserScan
-    obj.header = {
+    self.header = {
         frame_id = "",
         stamp = {secs = 0, nsecs = 0}
     }
-    obj.angle_min = 0.0
-    obj.angle_max = 0.0
-    obj.angle_increment = 0.0
-    obj.time_increment = 0.0
-    obj.scan_time = 0.0
-    obj.range_min = 0.0
-    obj.range_max = 0.0
-    obj.ranges = {}
-    obj.intensities = {}
+    self.angle_min = 0.0
+    self.angle_max = 0.0
+    self.angle_increment = 0.0
+    self.time_increment = 0.0
+    self.scan_time = 0.0
+    self.range_min = 0.0
+    self.range_max = 0.0
+    self.ranges = {}
+    self.intensities = {}
 
-    return obj
+    return self
+end
+
+function sensor_msgs_LaserScan:delete()
 end
 
 function sensor_msgs_LaserScan:set(

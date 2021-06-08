@@ -92,7 +92,7 @@ function ModROS:update(dt)
     -- self.dt = self.dt + dt
 
     -- create TFMessage object
-    self.tf_msg = tf2_msgs_TFMessage:init()
+    self.tf_msg = tf2_msgs_TFMessage.new()
 
     if self.doPubMsg then
         -- avoid writing to the pipe if it isn't actually open
@@ -131,9 +131,9 @@ end
 ------------------------------------------------
 --]]
 function ModROS:publish_sim_time_func()
-    local msg = rosgraph_msgs_Clock:init()
+    local msg = rosgraph_msgs_Clock.new()
     msg.clock = ros.Time.now()
-    self.file_pipe:write(rosgraph_msgs_Clock.ros_msg_name .. "\n" .. msg:to_json())
+    self.file_pipe:write(rosgraph_msgs_Clock.ROS_MSG_NAME .. "\n" .. msg:to_json())
 end
 
 --[[
@@ -179,7 +179,7 @@ function ModROS:publish_veh_func()
         local t = ros.Time.now()
 
         -- create nav_msgs/Odometry instance
-        local odom_msg = nav_msgs_Odometry:init()
+        local odom_msg = nav_msgs_Odometry.new()
 
         -- populate fields (not using Odometry:set(..) here as this is much
         -- more readable than a long list of anonymous args)
@@ -211,18 +211,18 @@ function ModROS:publish_veh_func()
 
 
         -- serialise to JSON and write to pipe
-        self.file_pipe:write(nav_msgs_Odometry.ros_msg_name .. "\n" .. odom_msg:to_json())
+        self.file_pipe:write(nav_msgs_Odometry.ROS_MSG_NAME .. "\n" .. odom_msg:to_json())
 
         -- get tf from odom to vehicles
         -- setting case_ih_7210_pro_9 as our robot (note: the numbber "_9" might differ depending on your vehicle.xml)
         if vehicle_name == mod_config.controlled_vehicle.base_link_frame_id then
             -- update the transforms_array
-            local tf_odom_base_link = geometry_msgs_TransformStamped:init()
+            local tf_odom_base_link = geometry_msgs_TransformStamped.new()
             tf_odom_base_link:set("odom", t, "base_link", p_z, p_x, p_y, q_z, q_x, q_y, q_w)
             self.tf_msg:add_transform(tf_odom_base_link)
         else
             -- update the transforms_array
-            local tf_odom_vehicle_link = geometry_msgs_TransformStamped:init()
+            local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
             tf_odom_vehicle_link:set("odom", t, vehicle_name, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
             self.tf_msg:add_transform(tf_odom_vehicle_link)
         end
@@ -299,7 +299,7 @@ function ModROS:publish_laser_scan_func()
         local t = ros.Time.now()
 
         -- create LaserScan instance
-        local scan_msg = sensor_msgs_LaserScan:init()
+        local scan_msg = sensor_msgs_LaserScan.new()
 
         -- populate fields (not using LaserScan:set(..) here as this is much
         -- more readable than a long list of anonymous args)
@@ -318,7 +318,7 @@ function ModROS:publish_laser_scan_func()
         --scan_msg.intensities = {}  -- we don't set this field (TODO: should we?)
 
         -- serialise to JSON and write to pipe
-        self.file_pipe:write(sensor_msgs_LaserScan.ros_msg_name .. "\n" .. scan_msg:to_json())
+        self.file_pipe:write(sensor_msgs_LaserScan.ROS_MSG_NAME .. "\n" .. scan_msg:to_json())
 
         -- convert to quaternion for ROS TF
         -- note the order of the axes here (see earlier comment about FS chirality)
@@ -330,7 +330,7 @@ function ModROS:publish_laser_scan_func()
         local base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(self.laser_frame_1, g_currentMission.controlledVehicle.components[1].node, 0, laser_dy, 0)
 
         -- create single TransformStamped message
-        local tf_base_link_laser_frame_i = geometry_msgs_TransformStamped:init()
+        local tf_base_link_laser_frame_i = geometry_msgs_TransformStamped.new()
         tf_base_link_laser_frame_i:set(
             "base_link",
             t,
@@ -417,7 +417,7 @@ function ModROS:publish_imu_func()
     self.sec = g_currentMission.environment.dayTime / 1000
 
     -- create sensor_msgs/Imu instance
-    local imu_msg = sensor_msgs_Imu:init()
+    local imu_msg = sensor_msgs_Imu.new()
 
     -- populate fields (not using sensor_msgs_Imu:set(..) here as this is much
     -- more readable than a long list of anonymous args)
@@ -437,7 +437,7 @@ function ModROS:publish_imu_func()
     imu_msg.linear_acceleration.z = acc_y
 
     -- serialise to JSON and write to pipe
-    self.file_pipe:write(sensor_msgs_Imu.ros_msg_name .. "\n" .. imu_msg:to_json())
+    self.file_pipe:write(sensor_msgs_Imu.ROS_MSG_NAME .. "\n" .. imu_msg:to_json())
 
     -- end
     -- end
@@ -458,7 +458,7 @@ function ModROS:publish_tf()
     -- serialize tf table into JSON
     local json_format_tf = self.tf_msg:to_json()
     --  publish tf
-    self.file_pipe:write(tf2_msgs_TFMessage.ros_msg_name .. "\n" .. json_format_tf)
+    self.file_pipe:write(tf2_msgs_TFMessage.ROS_MSG_NAME .. "\n" .. json_format_tf)
 end
 
 --[[
