@@ -12,11 +12,10 @@
         </en>
     </description>
     <author>tckarenchiang</author>
-    <version>0.0.1.0</version>
-    <iconFilename>store.png</iconFilename>
+    <version>0.0.2.0</version>
+    <iconFilename>store.dds</iconFilename>
     <multiplayer supported="false"/>
     <extraSourceFiles>
-        <sourceFile filename="modROS.lua"/>
+        <sourceFile filename="src/loader.lua"/>
     </extraSourceFiles>
 </modDesc>
-
