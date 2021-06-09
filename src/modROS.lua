@@ -374,17 +374,6 @@ end
 -- a function to publish get the position and orientaion of unmanned or manned vehicle(s) get and write to the named pipe (symbolic link)
 function ModROS:publish_imu_func()
     local vehicle = g_currentMission.controlledVehicle
-    -- for i, vehicle in pairs(g_currentMission.vehicles) do
-    -- if self.file_odom == nil then
-    -- print("Run ros odom_publisher.py first!! No named pipe created")
-    -- self.doPubIMU = false
-    -- else
-
-    local filename_t = {}
-
-    for token in string.gmatch(vehicle.configFileName, "[^/]+") do
-        table.insert(filename_t, token .. "_" .. vehicle.id)
-    end
 
     -- retrieve the vehicle node we're interested in
     local veh_node = vehicle.components[1].node
