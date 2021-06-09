@@ -88,7 +88,6 @@ function ModROS:loadMap()
         self.raycastMask = mod_config.raycast.collision_mask
     else
         self.raycastMask = RC_MASK_UNKNOWN5 + RC_MASK_TRACTORS + RC_MASK_COMBINES + RC_MASK_TRAILERS + RC_MASK_DYN_OBJS
-
     end
 
     print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
