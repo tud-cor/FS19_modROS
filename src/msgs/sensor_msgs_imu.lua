@@ -19,37 +19,40 @@ author: G.A. vd. Hoorn
 
 -- sensor_msgs_Imu class
 sensor_msgs_Imu = {}
-sensor_msgs_Imu.__index = sensor_msgs_Imu
+sensor_msgs_Imu.ROS_MSG_NAME = "sensor_msgs/Imu"
 
-sensor_msgs_Imu.ros_msg_name = "sensor_msgs/Imu"
+local sensor_msgs_Imu_mt = Class(sensor_msgs_Imu)
 
-function sensor_msgs_Imu:init()
-    local obj = {}
-    setmetatable(obj, sensor_msgs_Imu)
+function sensor_msgs_Imu.new()
+    local self = {}
+    setmetatable(self, sensor_msgs_Imu_mt)
 
-    -- fields as defined by geometry_msgs/sensor_msgs_Imu
-    obj.header = {
+    -- fields as defined by sensor_msgs/Imu
+    self.header = {
         frame_id = "",
         stamp = {secs = 0, nsecs = 0}
     }
-    obj.orientation = {
+    self.orientation = {
         x = 0.0,
         y = 0.0,
         z = 0.0,
         w = 0.0
     }
-    obj.angular_velocity = {
+    self.angular_velocity = {
         x = 0.0,
         y = 0.0,
         z = 0.0
     }
-    obj.linear_acceleration = {
+    self.linear_acceleration = {
         x = 0.0,
         y = 0.0,
         z = 0.0
     }
 
-    return obj
+    return self
+end
+
+function sensor_msgs_Imu:delete()
 end
 
 function sensor_msgs_Imu:set(frame_id, stamp, qx, qy, qz, qw, avx, avy, avz, lax, lay, laz)

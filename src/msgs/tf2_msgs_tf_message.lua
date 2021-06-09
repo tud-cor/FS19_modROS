@@ -19,18 +19,21 @@ author: G.A. vd. Hoorn
 
 -- tf2_msgs_TFMessage class
 tf2_msgs_TFMessage = {}
-tf2_msgs_TFMessage.__index = tf2_msgs_TFMessage
+tf2_msgs_TFMessage.ROS_MSG_NAME = "tf2_msgs/TFMessage"
 
-tf2_msgs_TFMessage.ros_msg_name = "tf2_msgs/TFMessage"
+local tf2_msgs_TFMessage_mt = Class(tf2_msgs_TFMessage)
 
-function tf2_msgs_TFMessage:init()
-    local obj = {}
-    setmetatable(obj, tf2_msgs_TFMessage)
+function tf2_msgs_TFMessage.new()
+    local self = {}
+    setmetatable(self, tf2_msgs_TFMessage_mt)
 
-    -- fields as defined by geometry_msgs/TfMessage
-    obj.transforms = {}
+    -- fields as defined by tf2_msgs/TFMessage
+    self.transforms = {}
 
-    return obj
+    return self
+end
+
+function tf2_msgs_TFMessage:delete()
 end
 
 function tf2_msgs_TFMessage:set(transforms)
@@ -43,65 +46,5 @@ function tf2_msgs_TFMessage:add_transform(transform)
 end
 
 function tf2_msgs_TFMessage:to_json()
-    return json.stringify(self)
-end
-
--- geometry_msgs_TransformStamped class
-geometry_msgs_TransformStamped = {}
-geometry_msgs_TransformStamped.__index = geometry_msgs_TransformStamped
-
-function geometry_msgs_TransformStamped:init()
-    local obj = {}
-    setmetatable(obj, geometry_msgs_TransformStamped)
-
-    -- fields as defined by geometry_msgs/TransformStamped
-    obj.header = {
-        frame_id = "",
-        stamp = {
-            secs = 0,
-            nsecs = 0
-        }
-    }
-    obj.child_frame_id = ""
-    obj.transform = {
-        translation = {
-            x = 0.0,
-            y = 0.0,
-            z = 0.0
-        },
-        rotation = {
-            x = 0.0,
-            y = 0.0,
-            z = 0.0,
-            w = 0.0
-        }
-    }
-
-    return obj
-end
-
-function geometry_msgs_TransformStamped:set(frame_id, stamp, child_frame_id, tx, ty, tz, qx, qy, qz, qw)
-    -- directly overwrite local fields
-    self.header = {
-        frame_id = frame_id,
-        stamp = stamp
-    }
-    self.child_frame_id = child_frame_id
-    self.transform = {
-        translation = {
-            x = tx,
-            y = ty,
-            z = tz
-        },
-        rotation = {
-            x = qx,
-            y = qy,
-            z = qz,
-            w = qw
-        }
-    }
-end
-
-function geometry_msgs_TransformStamped:to_json()
     return json.stringify(self)
 end

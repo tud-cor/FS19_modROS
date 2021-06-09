@@ -18,21 +18,21 @@ author: G.A. vd. Hoorn
 --]]
 
 nav_msgs_Odometry = {}
-nav_msgs_Odometry.__index = nav_msgs_Odometry
+nav_msgs_Odometry.ROS_MSG_NAME = "nav_msgs/Odometry"
 
-nav_msgs_Odometry.ros_msg_name = "nav_msgs/Odometry"
+local nav_msgs_Odometry_mt = Class(nav_msgs_Odometry)
 
-function nav_msgs_Odometry:init()
-    local obj = {}
-    setmetatable(obj, nav_msgs_Odometry)
+function nav_msgs_Odometry.new()
+    local self = {}
+    setmetatable(self, nav_msgs_Odometry_mt)
 
     -- fields as defined by nav_msgs/Odometry
-    obj.header = {
+    self.header = {
         frame_id = "",
         stamp = {secs = 0, nsecs = 0}
     }
-    obj.child_frame_id = ""
-    obj.pose = {
+    self.child_frame_id = ""
+    self.pose = {
         pose = {
             position = {
                 x = 0.0,
@@ -47,7 +47,7 @@ function nav_msgs_Odometry:init()
             }
         }
     }
-    obj.twist = {
+    self.twist = {
         twist = {
             linear = {
                 x = 0.0,
@@ -62,7 +62,10 @@ function nav_msgs_Odometry:init()
         }
     }
 
-    return obj
+    return self
+end
+
+function nav_msgs_Odometry:delete()
 end
 
 function nav_msgs_Odometry:set(frame_id, stamp, child_frame_id, px, py, pz, qx, qy, qz, qw, tlx, tly, tlz, tax, tay, taz)

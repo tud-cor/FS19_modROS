@@ -19,18 +19,21 @@ author: G.A. vd. Hoorn
 
 -- rosgraph_msgs_Clock class
 rosgraph_msgs_Clock = {}
-rosgraph_msgs_Clock.__index = rosgraph_msgs_Clock
+rosgraph_msgs_Clock.ROS_MSG_NAME = "rosgraph_msgs/Clock"
 
-rosgraph_msgs_Clock.ros_msg_name = "rosgraph_msgs/Clock"
+local rosgraph_msgs_Clock_mt = Class(rosgraph_msgs_Clock)
 
-function rosgraph_msgs_Clock:init()
-    local obj = {}
-    setmetatable(obj, rosgraph_msgs_Clock)
+function rosgraph_msgs_Clock.new()
+    local self = {}
+    setmetatable(self, rosgraph_msgs_Clock_mt)
 
     -- fields as defined by rosgraph_msgs/Clock
-    obj.clock = {secs = 0, nsecs = 0}
+    self.clock = {secs = 0, nsecs = 0}
 
-    return obj
+    return self
+end
+
+function rosgraph_msgs_Clock:delete()
 end
 
 function rosgraph_msgs_Clock:set(clock)
