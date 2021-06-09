@@ -45,6 +45,11 @@ mod_config =
           z = 0.0
       }
     }
+  },
+  -- the collision_mask for raycasting can be customized. Both
+  -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
+  raycast = {
+    collision_mask = nil
   }
 }
 

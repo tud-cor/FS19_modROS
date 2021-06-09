@@ -83,7 +83,14 @@ function ModROS:loadMap()
     local RC_MASK_COMBINES = math.pow(2,  7)
     local RC_MASK_TRAILERS = math.pow(2,  8)
     local RC_MASK_DYN_OBJS = math.pow(2, 12)
-    self.raycastMask = RC_MASK_UNKNOWN5 + RC_MASK_TRACTORS + RC_MASK_COMBINES + RC_MASK_TRAILERS + RC_MASK_DYN_OBJS
+
+    if mod_config.raycast.collision_mask then
+        self.raycastMask = mod_config.raycast.collision_mask
+        print(("Using custom collision mask for laser scanner: 0x%08X"):format(self.raycastMask))
+    else
+        self.raycastMask = RC_MASK_UNKNOWN5 + RC_MASK_TRACTORS + RC_MASK_COMBINES + RC_MASK_TRAILERS + RC_MASK_DYN_OBJS
+        print(("Using default collision mask for laser scanner: 0x%08X"):format(self.raycastMask))
+    end
 
     print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
 end
