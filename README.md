@@ -15,7 +15,7 @@ In its current state, `modROS` publishes four types of messages:
 
  - `rosgraph_msgs/Clock`: in-game simulated clock. This message stops being published when the game is paused/exited
  - `nav_msgs/Odometry`: ground-truth `Pose` and `Twist` of vehicles based on their in-game position and orientation
- - `sensor_msgs/LaserScan`: data from five virtual laser scanners (parallel planes)
+ - `sensor_msgs/LaserScan`: data from five virtual laser scanners (parallel planes) (but see [#10](https://github.com/tud-cor/FS19_modROS/issues/10))
  - `sensor_msgs/Imu`: from a simulated IMU (but see [#6](https://github.com/tud-cor/FS19_modROS/issues/6))
 
 In addition, there is preliminary support for input into Farming Simulator:
