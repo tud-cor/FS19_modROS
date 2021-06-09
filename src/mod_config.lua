@@ -45,6 +45,10 @@ mod_config =
           z = 0.0
       }
     }
+  },
+  -- the collision_mask for raycasting can be customized (ie: 0x12345678)
+  raycast = {
+    collision_mask = nil
   }
 }
 
