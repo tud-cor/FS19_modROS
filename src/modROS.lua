@@ -92,6 +92,10 @@ function ModROS:loadMap()
         print(("Using default collision mask for laser scanner: 0x%08X"):format(self.raycastMask))
     end
 
+    -- initialise connection to the Python side (but do not connect it yet)
+    self.path = ModROS.MOD_DIR .. "ROS_messages"
+    self._conx = WriteOnlyFileConnection.new(self.path)
+
     print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
 end
 
@@ -104,7 +108,7 @@ function ModROS:update(dt)
     if self.doPubMsg then
         -- avoid writing to the pipe if it isn't actually open
         -- avoid publishing data if one is not inside a vehicle
-        if self.file_pipe and g_currentMission.controlledVehicle ~= nil then
+        if self._conx:is_connected() and g_currentMission.controlledVehicle ~= nil then
             self:publish_sim_time_func()
             self:publish_veh_func()
             self:publish_laser_scan_func()
@@ -472,18 +476,15 @@ end
 addConsoleCommand("rosPubMsg", "write ros messages to named pipe", "rosPubMsg", ModROS)
 function ModROS:rosPubMsg(flag)
     if flag ~= nil and flag ~= "" and flag == "true" then
-        self.path = ModROS.MOD_DIR .. "ROS_messages"
 
-        if not self.file_pipe then
+        if not self._conx:is_connected() then
             print("connecting to named pipe")
-            self.file_pipe = io.open(self.path, "w")
-
-            -- check we could open the pipe
-            if self.file_pipe then
-                print("Opened '" .. self.path .. "'")
+            local ret, err = self._conx:connect()
+            if ret then
+                print("Opened '" .. self._conx:get_uri() .. "'")
             else
                 -- if not, print error to console and return
-                print("Could not open named pipe: unknown reason (FS Lua does not seem to provide it)")
+                print(("Could not connect: %s"):format(err))
                 print("Possible reasons:")
                 print(" - symbolic link was not created")
                 print(" - the 'all_in_one_publisher.py' script is not running")
@@ -535,10 +536,11 @@ function ModROS:rosPubMsg(flag)
         self.doPubMsg = false
         print("stop publishing data, set true, if you want to publish Pose")
 
-        if self.file_pipe then
-            self.file_pipe:close()
-            self.file_pipe = nil
-            print("closed named pipe")
+        local ret, err = self._conx:disconnect()
+        if not ret then
+            print(("Could not disconnect: %s"):format(err))
+        else
+            print("Disconnected")
         end
     end
 end
