@@ -25,6 +25,8 @@ stds.modROS = {
         "vehicle_util",
         "mod_config",
         "frames",
+        "Publisher",
+        "WriteOnlyFileConnection",
     }
 }
 
