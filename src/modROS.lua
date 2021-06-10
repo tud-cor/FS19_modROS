@@ -96,6 +96,13 @@ function ModROS:loadMap()
     self.path = ModROS.MOD_DIR .. "ROS_messages"
     self._conx = WriteOnlyFileConnection.new(self.path)
 
+    -- initialise publishers
+    self._pub_tf = Publisher.new(self._conx, "tf", tf2_msgs_TFMessage)
+    self._pub_clock = Publisher.new(self._conx, "clock", rosgraph_msgs_Clock)
+    self._pub_odom = Publisher.new(self._conx, "odom", nav_msgs_Odometry)
+    self._pub_scan = Publisher.new(self._conx, "scan", sensor_msgs_LaserScan)
+    self._pub_imu = Publisher.new(self._conx, "imu", sensor_msgs_Imu)
+
     print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
 end
 
@@ -144,7 +151,7 @@ end
 function ModROS:publish_sim_time_func()
     local msg = rosgraph_msgs_Clock.new()
     msg.clock = ros.Time.now()
-    self.file_pipe:write(rosgraph_msgs_Clock.ROS_MSG_NAME .. "\n" .. msg:to_json())
+    self._pub_clock:publish(msg)
 end
 
 --[[
@@ -220,9 +227,8 @@ function ModROS:publish_veh_func()
         -- TODO get AngularVelocity wrt local vehicle frame
         -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
 
-
-        -- serialise to JSON and write to pipe
-        self.file_pipe:write(nav_msgs_Odometry.ROS_MSG_NAME .. "\n" .. odom_msg:to_json())
+        -- publish the message
+        self._pub_odom:publish(odom_msg)
 
         -- get tf from odom to vehicles
         -- setting case_ih_7210_pro_9 as our robot (note: the numbber "_9" might differ depending on your vehicle.xml)
@@ -328,8 +334,8 @@ function ModROS:publish_laser_scan_func()
         scan_msg.ranges = self.laser_scan_array
         --scan_msg.intensities = {}  -- we don't set this field (TODO: should we?)
 
-        -- serialise to JSON and write to pipe
-        self.file_pipe:write(sensor_msgs_LaserScan.ROS_MSG_NAME .. "\n" .. scan_msg:to_json())
+        -- publish the message
+        self._pub_scan:publish(scan_msg)
 
         -- convert to quaternion for ROS TF
         -- note the order of the axes here (see earlier comment about FS chirality)
@@ -436,8 +442,8 @@ function ModROS:publish_imu_func()
     imu_msg.linear_acceleration.y = acc_x
     imu_msg.linear_acceleration.z = acc_y
 
-    -- serialise to JSON and write to pipe
-    self.file_pipe:write(sensor_msgs_Imu.ROS_MSG_NAME .. "\n" .. imu_msg:to_json())
+    -- publish the message
+    self._pub_imu:publish(imu_msg)
 
     -- end
     -- end
@@ -455,10 +461,7 @@ end
 ------------------------------------------------
 --]]
 function ModROS:publish_tf()
-    -- serialize tf table into JSON
-    local json_format_tf = self.tf_msg:to_json()
-    --  publish tf
-    self.file_pipe:write(tf2_msgs_TFMessage.ROS_MSG_NAME .. "\n" .. json_format_tf)
+    self._pub_tf:publish(self.tf_msg)
 end
 
 --[[
