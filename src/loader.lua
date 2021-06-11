@@ -43,6 +43,10 @@ source(Utils.getFilename("src/utils/vehicle_util.lua", directory))
 source(Utils.getFilename("src/utils/frames.lua", directory))
 source(Utils.getFilename("src/utils/ros.lua", directory))
 
+-- "ROS"
+source(Utils.getFilename("src/ros/WriteOnlyFileConnection.lua", directory))
+source(Utils.getFilename("src/ros/Publisher.lua", directory))
+
 -- main/default configuration
 -- TODO: add UI for all of this
 source(Utils.getFilename("src/mod_config.lua", directory))
