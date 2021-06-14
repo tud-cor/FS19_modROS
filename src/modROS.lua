@@ -66,10 +66,8 @@ local function center_camera_func()
 end
 
 function ModROS:loadMap()
-    self.counter = 0
     self.last_read = ""
     self.buf = SharedMemorySegment:init(64)
-    -- self.dt = 0
     self.sec = 0
     self.nsec = 0
     self.l_v_x_0 = 0
@@ -107,8 +105,6 @@ function ModROS:loadMap()
 end
 
 function ModROS:update(dt)
-    -- self.dt = self.dt + dt
-
     -- create TFMessage object
     self.tf_msg = tf2_msgs_TFMessage.new()
 
@@ -259,7 +255,6 @@ end
 --]]
 function ModROS:laser_data_gen(x, y, z, dx_r, dy, dz_r)
     self.raycastDistance = self.INIT_RAY_DISTANCE
-    self.object = nil
     raycastClosest(x, y, z, dx_r, dy, dz_r, "raycastCallback", mod_config.laser_scan.range_max, self, self.raycastMask)
 
     -- push back the self.raycastDistance to self.laser_scan_array table
