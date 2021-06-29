@@ -53,3 +53,6 @@ source(Utils.getFilename("src/mod_config.lua", directory))
 
 -- main file
 source(Utils.getFilename("src/modROS.lua", directory))
+
+-- LaserScanner class
+source(Utils.getFilename("src/utils/LaserScanner.lua", directory))
