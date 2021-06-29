@@ -373,40 +373,38 @@ end
 ------------------------------------------------
 ------------------------------------------------
 --]]
--- a function to load the ROS joystick state from XML file to take over control of manned vehicle in the game
-function ModROS:subscribe_ROScontrol_manned_func(dt)
-    if g_currentMission.controlledVehicle == nil then
-        print("You have left your vehicle, come on! Please hop in one and type the command again!")
-        self.doRosControl = false
-    elseif g_currentMission.controlledVehicle ~= nil and self.v_ID ~= nil then
-        -- retrieve the first 32 chars from the buffer
-        -- note: this does not remove them, it simply copies them
-        local buf_read = self.buf:read(64)
+function ModROS:subscribe_ROScontrol_func(dt)
+    for _, vehicle in pairs(g_currentMission.vehicles) do
+        if vehicle.spec_drivable then
+            -- retrieve the first 32 chars from the buffer
+            -- note: this does not remove them, it simply copies them
+            local buf_read = self.buf:read(64)
 
-        -- print to the game console if what we've found in the buffer is different
-        -- from what was there the previous iteration
-        -- the counter is just there to make sure we don't see the same line twice
-        local allowedToDrive = false
-        if buf_read ~= self.last_read and buf_read ~= "" then
-            self.last_read = buf_read
-            local read_str_list = {}
-            -- loop over whitespace-separated components
-            for read_str in string.gmatch(self.last_read, "%S+") do
-                table.insert(read_str_list, read_str)
+            -- print to the game console if what we've found in the buffer is different
+            -- from what was there the previous iteration
+            -- the counter is just there to make sure we don't see the same line twice
+            local allowedToDrive = false
+            if buf_read ~= self.last_read and buf_read ~= "" then
+                self.last_read = buf_read
+                local read_str_list = {}
+                -- loop over whitespace-separated components
+                for read_str in string.gmatch(self.last_read, "%S+") do
+                    table.insert(read_str_list, read_str)
+                end
+
+                self.acc = tonumber(read_str_list[1])
+                self.rotatedTime_param = tonumber(read_str_list[2])
+                allowedToDrive = read_str_list[3]
             end
 
-            self.acc = tonumber(read_str_list[1])
-            self.rotatedTime_param = tonumber(read_str_list[2])
-            allowedToDrive = read_str_list[3]
-        end
+            if allowedToDrive == "true" then
+                self.allowedToDrive = true
+            elseif allowedToDrive == "false" then
+                self.allowedToDrive = false
+            end
 
-        if allowedToDrive == "true" then
-            self.allowedToDrive = true
-        elseif allowedToDrive == "false" then
-            self.allowedToDrive = false
+            vehicle_util.ROSControl(vehicle, dt, self.acc, self.allowedToDrive, self.rotatedTime_param)
         end
-
-        vehicle_util.ROSControl(self.vehicle, dt, self.acc, self.allowedToDrive, self.rotatedTime_param)
     end
 end
 
@@ -428,20 +426,12 @@ end
 --  console command to take over control of manned vehicle in the game
 addConsoleCommand("rosControlVehicle", "let ROS control the current vehicle", "rosControlVehicle", ModROS)
 function ModROS:rosControlVehicle(flag)
-    if flag ~= nil and flag ~= "" and flag == "true" and g_currentMission.controlledVehicle ~= nil then
-        self.vehicle = g_currentMission.controlledVehicle
-        self.v_ID = g_currentMission.controlledVehicle.components[1].node
+    if flag ~= nil and flag ~= "" and flag == "true" then
         self.doRosControl = true
         print("start ROS teleoperation")
-    elseif g_currentMission.controlledVehicle == nil then
-        print("you are not inside any vehicle, come on! Enter 'e' to hop in one next to you!")
     elseif flag == nil or flag == "" or flag == "false" then
         self.doRosControl = false
         print("stop ROS teleoperation")
-
-    -- self.acc = 0
-    -- self.rotatedTime_param  = 0
-    -- self.allowedToDrive = false
     end
 end
 
