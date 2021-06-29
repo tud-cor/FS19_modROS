@@ -13,6 +13,7 @@ exclude_files = {"src/utils/json.lua", "src/utils/shared_memory_segment.lua"}
 
 stds.modROS = {
     globals = {
+        "ModROS",
         "g_modROSModDirectory",
         "g_modROSModName",
         "geometry_msgs_TransformStamped",
@@ -27,6 +28,8 @@ stds.modROS = {
         "frames",
         "Publisher",
         "WriteOnlyFileConnection",
+        "LaserScanner",
+        "RosVehicle",
     }
 }
 
