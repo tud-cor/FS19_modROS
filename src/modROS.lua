@@ -24,24 +24,30 @@ The first one is to publish data, the second one is to subscribe data and the la
 ------------------------------------------------
 ------------------------------------------------
 
-A: Publishing data
-1. sim time publisher - publish the farmsim time
-2. odom publisher - publish the odom data from the game
-3. laser scan publisher - publish the laser scan data (64 rays)
-4. imu publisher - publish the imu data (especially the acc info)
-5. TF publisher - publish tf
-6. A command for writing all messages to a named pipe: "rosPubMsg true/false"
+A. Shared bits of information/infrastructure with RosVehicle spec
+1. getPublisher - instantiate publishers for each spec instance, called from RosVehicle.lua
+
 ------------------------------------------------
 ------------------------------------------------
 
-B. Subscribing data
-1. ros_cmd_teleop subscriber - give the vehicle control to ROS'
+B: Publishing data
+1. sim time publisher - publish in-game simulated clock. This message stops being published when the game is paused/exited
+2. odom publisher - publish ground-truth Pose and Twist of vehicles based on their in-game position and orientation
+3. laser scan publisher - publish the laser scan data
+4. imu publisher - publish the imu data (especially the acc info)
+5. A command for writing all messages to a named pipe: "rosPubMsg true/false"
+
+------------------------------------------------
+------------------------------------------------
+
+C. Subscribing data
+1. ros_cmd_teleop subscriber - give the vehicle control to ROS
 2. A command for taking over control of a vehicle in the game : "rosControlVehicle true/false"
 
 ------------------------------------------------
 ------------------------------------------------
 
-C. Force-centering the camera
+D. Force-centering the camera
 1. A command for force-centering the current camera: "forceCenteredCamera true/false"
 
 ------------------------------------------------
@@ -115,7 +121,7 @@ function ModROS:update(dt)
     end
 
     if self.doRosControl then
-        self:subscribe_ROScontrol_manned_func(dt)
+        self:subscribe_ROScontrol_func(dt)
     end
     if self.doCenterCamera then
         if g_currentMission.controlledVehicle == nil then
@@ -127,35 +133,24 @@ function ModROS:update(dt)
     end
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.1 sim_time publisher (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+
+-- -- A.1 getPublisher - instantiate publishers for each spec instance, called from RosVehicle.lua
+-- function ModROS:getPublisher(topic_name, topic_type)
+--     local pub = Publisher.new(self._conx, topic_name, topic_type)
+--     return pub
+-- end
+
+
+-- B.1 sim_time publisher: publish the farmsim time
 function ModROS:publish_sim_time_func()
     local msg = rosgraph_msgs_Clock.new()
     msg.clock = ros.Time.now()
     self._pub_clock:publish(msg)
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.2. odom publisher (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
--- a function to publish get the position and orientaion of unmanned or manned vehicle(s) get and write to the named pipe (symbolic link)
+
+-- B.2. odom publisher
+-- a function to publish ground-truth Pose and Twist of all vehicles (including non-drivable) based on their in-game position and orientation
 function ModROS:publish_veh_func()
     for _, vehicle in pairs(g_currentMission.vehicles) do
         local ros_time = ros.Time.now()
@@ -163,17 +158,6 @@ function ModROS:publish_veh_func()
     end
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.3. laser scan publisher  (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
 
 -- B.3. laser scan publisher
 function ModROS:publish_laser_scan_func()
@@ -191,17 +175,7 @@ function ModROS:publish_laser_scan_func()
 end
 
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.4. imu publisher (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+-- B.4. imu publisher
 -- a function to publish get the position and orientaion of unmanned or manned vehicle(s) get and write to the named pipe (symbolic link)
 function ModROS:publish_imu_func()
     local vehicle = g_currentMission.controlledVehicle
@@ -263,32 +237,7 @@ function ModROS:publish_imu_func()
     -- end
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.5. TF publisher (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
-function ModROS:publish_tf()
-    self._pub_tf:publish(self.tf_msg)
-end
-
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.6. A command for writing all messages to a named pipe: "rosPubMsg true/false"
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+-- B.5. A command for writing all messages to a named pipe: "rosPubMsg true/false"
 -- messages publisher console command
 addConsoleCommand("rosPubMsg", "write ros messages to named pipe", "rosPubMsg", ModROS)
 function ModROS:rosPubMsg(flag)
@@ -324,17 +273,9 @@ function ModROS:rosPubMsg(flag)
     end
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- B.1. ros_cmd_teleop subscriber (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+
+-- C.1. ros_cmd_teleop subscriber
+-- a function to input the ROS geometry_msgs/Twist into the game to take over control of all vehicles
 function ModROS:subscribe_ROScontrol_func(dt)
     for _, vehicle in pairs(g_currentMission.vehicles) do
         if vehicle.spec_drivable then
@@ -371,21 +312,12 @@ function ModROS:subscribe_ROScontrol_func(dt)
 end
 
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- B.2. A command for taking over control of a vehicle in the game : "rosControlVehicle true/false"
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+
+-- C.2. A command for taking over control of a vehicle in the game : "rosControlVehicle true/false"
 
 -- TODO Allow control of vehicles other than the 'active one'. (the console name has already been changed, but the implementation hasn't yet)
 
---  console command to take over control of manned vehicle in the game
+--  console command to take over control of all vehicles in the game
 addConsoleCommand("rosControlVehicle", "let ROS control the current vehicle", "rosControlVehicle", ModROS)
 function ModROS:rosControlVehicle(flag)
     if flag ~= nil and flag ~= "" and flag == "true" then
@@ -398,18 +330,7 @@ function ModROS:rosControlVehicle(flag)
 end
 
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- C.1 A command for force-centering the current camera: "forceCenteredCamera true/false"
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
-
+-- D.1 A command for force-centering the current camera: "forceCenteredCamera true/false"
 -- centering the camera by setting the camera rotX, rotY to original angles
 addConsoleCommand("forceCenteredCamera", "force-center the current camera", "forceCenteredCamera", ModROS)
 function ModROS:forceCenteredCamera(flag)
