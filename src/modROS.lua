@@ -53,7 +53,7 @@ maintainer: Ting-Chia Chiang, G.A. vd. Hoorn
 
 --]]
 
-local ModROS = {}
+ModROS = {}
 ModROS.MOD_DIR = g_modROSModDirectory
 ModROS.MOD_NAME = g_modROSModName
 ModROS.MOD_VERSION = g_modManager.nameToMod[ModROS.MOD_NAME]["version"]
