@@ -39,14 +39,14 @@ end
 
 function RosVehicle.registerEventListeners(vehicleType)
     SpecializationUtil.registerEventListener(vehicleType, "onLoad", RosVehicle)
-    SpecializationUtil.registerEventListener(vehicleType, "onUpdate", RosVehicle)
+    -- SpecializationUtil.registerEventListener(vehicleType, "onUpdate", RosVehicle)
 end
 
 
--- rosVehicle spec own update
-function RosVehicle:onUpdate(dt)
+-- -- rosVehicle spec own update
+-- function RosVehicle:onUpdate(dt)
 
-end
+-- end
 
 
 function RosVehicle:onLoad()
