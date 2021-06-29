@@ -104,6 +104,15 @@ function ModROS:loadMap()
     print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
 end
 
+function ModROS.installSpecializations(vehicleTypeManager, specializationManager, modDirectory, modName)
+    specializationManager:addSpecialization("rosVehicle", "RosVehicle", Utils.getFilename("src/vehicles/RosVehicle.lua", modDirectory), nil) -- Nil is important here
+
+    for typeName, _ in pairs(vehicleTypeManager:getVehicleTypes()) do
+        vehicleTypeManager:addSpecialization(typeName, modName .. ".rosVehicle")
+    end
+
+end
+
 function ModROS:update(dt)
     -- create TFMessage object
     self.tf_msg = tf2_msgs_TFMessage.new()
