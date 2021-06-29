@@ -20,7 +20,7 @@ RosVehicle.MOD_DIR = g_modROSModDirectory
 RosVehicle.MOD_NAME = g_modROSModName
 
 
-function RosVehicle.prerequisitesPresent(specializations)
+function RosVehicle.prerequisitesPresent()
     return true
 end
 
