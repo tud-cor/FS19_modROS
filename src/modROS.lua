@@ -73,22 +73,6 @@ function ModROS:loadMap()
     self.l_v_x_0 = 0
     self.l_v_y_0 = 0
     self.l_v_z_0 = 0
-    -- initial raycast distance
-    self.INIT_RAY_DISTANCE = 1000
-    -- set a raycast mask for a camera node which enables bits 5(unkown), 6(tractors), 7(combines), 8(trailers), 12(dynamic_objects)
-    local RC_MASK_UNKNOWN5 = math.pow(2,  5)
-    local RC_MASK_TRACTORS = math.pow(2,  6)
-    local RC_MASK_COMBINES = math.pow(2,  7)
-    local RC_MASK_TRAILERS = math.pow(2,  8)
-    local RC_MASK_DYN_OBJS = math.pow(2, 12)
-
-    if mod_config.raycast.collision_mask then
-        self.raycastMask = mod_config.raycast.collision_mask
-        print(("Using custom collision mask for laser scanner: 0x%08X"):format(self.raycastMask))
-    else
-        self.raycastMask = RC_MASK_UNKNOWN5 + RC_MASK_TRACTORS + RC_MASK_COMBINES + RC_MASK_TRAILERS + RC_MASK_DYN_OBJS
-        print(("Using default collision mask for laser scanner: 0x%08X"):format(self.raycastMask))
-    end
 
     -- initialise connection to the Python side (but do not connect it yet)
     self.path = ModROS.MOD_DIR .. "ROS_messages"
@@ -124,8 +108,9 @@ function ModROS:update(dt)
             self:publish_sim_time_func()
             self:publish_veh_func()
             self:publish_laser_scan_func()
-            self:publish_imu_func()
-            self:publish_tf()
+            -- self:publish_imu_func()
+            self._pub_tf:publish(self.tf_msg)
+
         end
     end
 
@@ -172,82 +157,9 @@ end
 --]]
 -- a function to publish get the position and orientaion of unmanned or manned vehicle(s) get and write to the named pipe (symbolic link)
 function ModROS:publish_veh_func()
-    -- vehicle = g_currentMission.controlledVehicle
     for _, vehicle in pairs(g_currentMission.vehicles) do
-
-        -- legalize a name for ROS
-        local vehicle_name = ros.Names.sanatize(vehicle:getFullName() .. "_" .. vehicle.id)
-
-        -- retrieve the vehicle node we're interested in
-        local veh_node = vehicle.components[1].node
-
-        -- retrieve global (ie: world) coordinates of this node
-        local p_x, p_y, p_z = getWorldTranslation(veh_node)
-
-        -- retrieve global (ie: world) quaternion of this node
-        local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
-
-        -- get twist data
-        local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
-        -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
-
-
-        -- convert y up world to z up world (farmsim coordinate system: x right, z towards me, y up; ROS: y right, x towards me, z up)
-        -- https://stackoverflow.com/questions/16099979/can-i-switch-x-y-z-in-a-quaternion
-        -- https://gamedev.stackexchange.com/questions/129204/switch-axes-and-handedness-of-a-quaternion
-        -- https://stackoverflow.com/questions/18818102/convert-quaternion-representing-rotation-from-one-coordinate-system-to-another
-
-        -- FS time is "frozen" within a single call to update(..), so this
-        -- will assign the same stamp to all Odometry messages
-        local t = ros.Time.now()
-
-        -- create nav_msgs/Odometry instance
-        local odom_msg = nav_msgs_Odometry.new()
-
-        -- populate fields (not using Odometry:set(..) here as this is much
-        -- more readable than a long list of anonymous args)
-        odom_msg.header.frame_id = "odom"
-        odom_msg.header.stamp = t
-        odom_msg.child_frame_id = vehicle_name
-        -- note the order of the axes here (see earlier comment about FS chirality)
-        odom_msg.pose.pose.position.x = p_z
-        odom_msg.pose.pose.position.y = p_x
-        odom_msg.pose.pose.position.z = p_y
-        -- note again the order of the axes
-        odom_msg.pose.pose.orientation.x = q_z
-        odom_msg.pose.pose.orientation.y = q_x
-        odom_msg.pose.pose.orientation.z = q_y
-        odom_msg.pose.pose.orientation.w = q_w
-        -- since the train returns nil when passed to getLocalLinearVelocity, set 0 to prevent an error
-        if l_v_x == nil then
-            odom_msg.twist.twist.linear.x = 0
-            odom_msg.twist.twist.linear.y = 0
-            odom_msg.twist.twist.linear.z = 0
-        else
-        -- note again the order of the axes
-            odom_msg.twist.twist.linear.x = l_v_z
-            odom_msg.twist.twist.linear.y = l_v_x
-            odom_msg.twist.twist.linear.z = l_v_y
-        end
-        -- TODO get AngularVelocity wrt local vehicle frame
-        -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
-
-        -- publish the message
-        self._pub_odom:publish(odom_msg)
-
-        -- get tf from odom to vehicles
-        -- setting case_ih_7210_pro_9 as our robot (note: the numbber "_9" might differ depending on your vehicle.xml)
-        if vehicle_name == mod_config.controlled_vehicle.base_link_frame_id then
-            -- update the transforms_array
-            local tf_odom_base_link = geometry_msgs_TransformStamped.new()
-            tf_odom_base_link:set("odom", t, "base_link", p_z, p_x, p_y, q_z, q_x, q_y, q_w)
-            self.tf_msg:add_transform(tf_odom_base_link)
-        else
-            -- update the transforms_array
-            local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
-            tf_odom_vehicle_link:set("odom", t, vehicle_name, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
-            self.tf_msg:add_transform(tf_odom_vehicle_link)
-        end
+        local ros_time = ros.Time.now()
+        vehicle:pubOdom(ros_time, self.tf_msg, self._pub_odom)
     end
 end
 
@@ -262,124 +174,22 @@ end
 ------------------------------------------------
 ------------------------------------------------
 --]]
-function ModROS:laser_data_gen(x, y, z, dx_r, dy, dz_r)
-    self.raycastDistance = self.INIT_RAY_DISTANCE
-    raycastClosest(x, y, z, dx_r, dy, dz_r, "raycastCallback", mod_config.laser_scan.range_max, self, self.raycastMask)
 
-    -- push back the self.raycastDistance to self.laser_scan_array table
-    -- if  self.raycastDistance is updated which mean there is object detected and raycastCallback is called
-    -- otherwise, fill the range with self.INIT_RAY_DISTANCE (1000) (no object detected)
-
-    -- if laser_scan.ignore_terrain is set true then ignore the terrain when detected
-    if mod_config.laser_scan.ignore_terrain then
-        if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode then
-            -- table.insert(self.laser_scan_array, self.raycastDistance/10)
-            table.insert(self.laser_scan_array, self.raycastDistance)
-        else
-            table.insert(self.laser_scan_array, self.INIT_RAY_DISTANCE)
-        end
-    else
-        if self.raycastDistance ~= self.INIT_RAY_DISTANCE then
-            -- table.insert(self.laser_scan_array, self.raycastDistance/10)
-            table.insert(self.laser_scan_array, self.raycastDistance)
-        else
-            table.insert(self.laser_scan_array, self.INIT_RAY_DISTANCE)
-        end
-    end
-
-end
-
+-- B.3. laser scan publisher
 function ModROS:publish_laser_scan_func()
-    local radius = 0.2
-    -- cache locally
-    local cos = math.cos
-    local sin = math.sin
-    local LS_FOV = mod_config.laser_scan.angle_max - mod_config.laser_scan.angle_min
-    -- calculate nr of steps between rays
-    local delta_theta = LS_FOV / (mod_config.laser_scan.num_rays - 1)
 
-    for i = 0, mod_config.laser_scan.num_layers-1 do
-        self.laser_scan_array = {}
-        -- get the (world) coordinate of each laser scanner's origin: (orig_x, orig_y, orig_z)
-        -- "laser_dy" is added between the scanning planes, along +y direction (locally) from the lowest laser scan plane
-        -- and all laser scan planes are parallel to each other
-        local laser_dy = mod_config.laser_scan.inter_layer_distance * i
-        local orig_x, orig_y, orig_z = localToWorld(self.laser_frame_1, 0, laser_dy, 0)
-
-        for j = 0, (mod_config.laser_scan.num_rays - 1) do
-            local seg_theta = j * delta_theta
-            -- (i_laser_dx, 0 , i_laser_dz) is a local space direction to define the world space raycasting (scanning) direction
-            local i_laser_dx = -sin(seg_theta) * radius
-            local i_laser_dz = -cos(seg_theta) * radius
-            local dx, dy, dz = localDirectionToWorld(self.laser_frame_1, i_laser_dx, 0 , i_laser_dz)
-            self:laser_data_gen(orig_x, orig_y, orig_z, dx, dy, dz)
+    if mod_config.control_only_active_one then
+        local vehicle = g_currentMission.controlledVehicle
+        local ros_time = ros.Time.now()
+        vehicle:fillLaserData(ros_time, self.tf_msg, self._pub_scan)
+    else
+        for _, vehicle in pairs(g_currentMission.vehicles) do
+            local ros_time = ros.Time.now()
+            vehicle:fillLaserData(ros_time, self.tf_msg, self._pub_scan)
         end
-
-        -- FS time is "frozen" within a single call to update(..), so this
-        -- will assign the same stamp to all LaserScan messages
-        local t = ros.Time.now()
-
-        -- create LaserScan instance
-        local scan_msg = sensor_msgs_LaserScan.new()
-
-        -- populate fields (not using LaserScan:set(..) here as this is much
-        -- more readable than a long list of anonymous args)
-        scan_msg.header.frame_id = "laser_frame_" .. i
-        scan_msg.header.stamp = t
-        -- with zero angle being forward along the x axis, scanning fov +-180 degrees
-        scan_msg.angle_min = mod_config.laser_scan.angle_min
-        scan_msg.angle_max = mod_config.laser_scan.angle_max
-        scan_msg.angle_increment = LS_FOV / mod_config.laser_scan.num_rays
-        -- assume sensor gives 50 scans per second
-        scan_msg.time_increment = (1.0 / 50) / mod_config.laser_scan.num_rays
-        --scan_msg.scan_time = 0.0  -- we don't set this field (TODO: should we?)
-        scan_msg.range_min = mod_config.laser_scan.range_min
-        scan_msg.range_max = mod_config.laser_scan.range_max
-        scan_msg.ranges = self.laser_scan_array
-        --scan_msg.intensities = {}  -- we don't set this field (TODO: should we?)
-
-        -- publish the message
-        self._pub_scan:publish(scan_msg)
-
-        -- convert to quaternion for ROS TF
-        -- note the order of the axes here (see earlier comment about FS chirality)
-        -- the rotation from base_link to raycastnode is the same as rotation from raycastnode to virtaul laser_frame_i as there is no rotation between base_link to raycastnode
-        local q = ros.Transformations.quaternion_from_euler(mod_config.laser_scan.laser_transform.rotation.z, mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y)
-
-        -- get the translation from base_link to laser_frame_i
-        -- laser_dy is the offset from laser_frame_i to laser_frame_i+1
-        local base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(self.laser_frame_1, g_currentMission.controlledVehicle.components[1].node, 0, laser_dy, 0)
-
-        -- create single TransformStamped message
-        local tf_base_link_laser_frame_i = geometry_msgs_TransformStamped.new()
-        tf_base_link_laser_frame_i:set(
-            "base_link",
-            t,
-            "laser_frame_" .. i,
-            -- note the order of the axes here (see earlier comment about FS chirality)
-            base_to_laser_z,
-            base_to_laser_x,
-            base_to_laser_y,
-            -- we don't need to swap the order of q, since the calculation of q is based on the ROS chirality
-            q[1],
-            q[2],
-            q[3],
-            q[4]
-        )
-        self.tf_msg:add_transform(tf_base_link_laser_frame_i)
     end
 end
 
-function ModROS:raycastCallback(transformId, _, _, _, distance, _, _, _)
-    self.raycastDistance = distance
-    self.raycastTransformId = transformId
-    -- for debugging
-    -- self.object = g_currentMission:getNodeObject(self.raycastTransformId)
-    -- print(string.format("hitted object is %s",getName(self.raycastTransformId)))
-    -- print(string.format("hitted object id is %f",self.raycastTransformId))
-    -- print(string.format("self.raycastDistance is %f",self.raycastDistance))
-    -- print("v_id ",g_currentMission.controlledVehicle.components[1].node)
-end
 
 --[[
 ------------------------------------------------
