@@ -114,7 +114,7 @@ function ModROS:update(dt)
         -- avoid publishing data if one is not inside a vehicle
         if self._conx:is_connected() and g_currentMission.controlledVehicle ~= nil then
             self:publish_sim_time_func()
-            self:publish_veh_func()
+            self:publish_veh_odom_func()
             self:publish_laser_scan_func()
             -- self:publish_imu_func()
             self._pub_tf:publish(self.tf_msg)
@@ -153,7 +153,7 @@ end
 
 -- B.2. odom publisher
 -- a function to publish ground-truth Pose and Twist of all vehicles (including non-drivable) based on their in-game position and orientation
-function ModROS:publish_veh_func()
+function ModROS:publish_veh_odom_func()
     -- FS time is "frozen" within a single call to update(..), so this
     -- will assign the same stamp to all Odometry messages
     local ros_time = ros.Time.now()
