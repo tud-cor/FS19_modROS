@@ -70,3 +70,19 @@ function Publisher:publish(msg)
     end
     return ret
 end
+
+function Publisher:publish_with_ns(msg, vehicle_ns)
+    if msg.ROS_MSG_NAME ~= self._message_type_name then
+        return nil, ("Can't publish '%s' with publisher of type '%s'"):format(msg.ROS_MSG_NAME, self._message_type_name)
+    end
+    if not self._conx:is_connected() then
+        return nil, "Can't write to nil fd"
+    end
+
+    -- try writing the serialised message to the connection
+    local ret, err = self._conx:write(vehicle_ns .. "\n" .. msg.ROS_MSG_NAME .. "\n" .. msg:to_json())
+    if not ret then
+        return nil, "Error publishing message: '" .. err .. "'"
+    end
+    return ret
+end
