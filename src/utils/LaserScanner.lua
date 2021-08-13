@@ -64,7 +64,8 @@ function LaserScanner:getLaserData(laser_scan_array, x, y, z, dx_r, dy, dz_r)
     -- if laser_scan.ignore_terrain is set true then ignore the terrain when detected
 
     if self.vehicle_table.laser_scan.ignore_terrain then
-        if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode and self.raycastTransformId ~= self.vehicle.components[1].node then
+        if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode and self.raycastTransformId ~= self.vehicle.components[1].node and  self.raycastTransformId ~= self.vehicle.components[2].node  then
+            -- table.insert(self.laser_scan_array, self.raycastDistance/10)
             table.insert(laser_scan_array, self.raycastDistance)
         else
             table.insert(laser_scan_array, self.INIT_RAY_DISTANCE)
