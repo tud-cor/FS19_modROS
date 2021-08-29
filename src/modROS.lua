@@ -116,7 +116,7 @@ function ModROS:update(dt)
             self:publish_sim_time_func()
             self:publish_veh_odom_func()
             self:publish_laser_scan_func()
-            -- self:publish_imu_func()
+            self:publish_imu_func()
             self._pub_tf:publish(self.tf_msg)
 
         end
@@ -182,63 +182,16 @@ end
 -- B.4. imu publisher
 -- a function to publish get the position and orientaion of unmanned or manned vehicle(s) get and write to the named pipe (symbolic link)
 function ModROS:publish_imu_func()
-    local vehicle = g_currentMission.controlledVehicle
-
-    -- retrieve the vehicle node we're interested in
-    local veh_node = vehicle.components[1].node
-
-    -- retrieve global (ie: world) coordinates of this node
-    local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
-
-    -- get twist data and calculate acc info
-
-    -- check getVelocityAtWorldPos and getVelocityAtLocalPos
-    -- local linear vel: Get velocity at local position of transform object; "getLinearVelocity" is the the velocity wrt world frame
-    -- local l_v_z max is around 8(i guess the unit is m/s here) when reach 30km/hr(shown in speed indicator)
-    local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
-    -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
-
-    -- TODO add condition to filter out the vehicle: train because it does not have velocity info
-    -- for now we'll just use 0.0 as a replacement value
-    if not l_v_x then l_v_x = 0.0 end
-    if not l_v_y then l_v_y = 0.0 end
-    if not l_v_z then l_v_z = 0.0 end
-
-    -- calculation of linear acceleration in x,y,z directions
-    local acc_x = (l_v_x - self.l_v_x_0) / (g_currentMission.environment.dayTime / 1000 - self.sec)
-    local acc_y = (l_v_y - self.l_v_y_0) / (g_currentMission.environment.dayTime / 1000 - self.sec)
-    local acc_z = (l_v_z - self.l_v_z_0) / (g_currentMission.environment.dayTime / 1000 - self.sec)
-    -- update the velocity and time
-    self.l_v_x_0 = l_v_x
-    self.l_v_y_0 = l_v_y
-    self.l_v_z_0 = l_v_z
-    self.sec = g_currentMission.environment.dayTime / 1000
-
-    -- create sensor_msgs/Imu instance
-    local imu_msg = sensor_msgs_Imu.new()
-
-    -- populate fields (not using sensor_msgs_Imu:set(..) here as this is much
-    -- more readable than a long list of anonymous args)
-    imu_msg.header.frame_id = "base_link"
-    imu_msg.header.stamp = ros.Time.now()
-    -- note the order of the axes here (see earlier comment about FS chirality)
-    imu_msg.orientation.x = q_z
-    imu_msg.orientation.y = q_x
-    imu_msg.orientation.z = q_y
-    imu_msg.orientation.w = q_w
-    -- TODO get AngularVelocity wrt local vehicle frame
-    -- since the farmsim `getAngularVelocity()` can't get body-local angular velocity, we don't set imu_msg.angular_velocity for now
-
-    -- note again the order of the axes
-    imu_msg.linear_acceleration.x = acc_z
-    imu_msg.linear_acceleration.y = acc_x
-    imu_msg.linear_acceleration.z = acc_y
-
-    -- publish the message
-    self._pub_imu:publish(imu_msg)
-
-    -- end
-    -- end
+    if mod_config.control_only_active_one then
+        local vehicle = g_currentMission.controlledVehicle
+        local ros_time = ros.Time.now()
+        vehicle:pubImu(ros_time, self._pub_imu)
+    else
+        for _, vehicle in pairs(g_currentMission.vehicles) do
+            local ros_time = ros.Time.now()
+            vehicle:pubImu(ros_time, self._pub_imu)
+        end
+    end
 end
 
 -- B.5. Console command allows to toggle publishers on/off: "rosPubMsg true/false"
