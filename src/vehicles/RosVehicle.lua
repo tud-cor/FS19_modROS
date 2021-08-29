@@ -31,10 +31,9 @@ end
 
 function RosVehicle.registerFunctions(vehicleType)
     SpecializationUtil.registerFunction(vehicleType, "addTF", RosVehicle.addTF)
-    SpecializationUtil.registerFunction(vehicleType, "fillLaserData", RosVehicle.fillLaserData)
     SpecializationUtil.registerFunction(vehicleType, "getLaserFrameNode", RosVehicle.getLaserFrameNode)
+    SpecializationUtil.registerFunction(vehicleType, "pubLaserScan", RosVehicle.pubLaserScan)
     SpecializationUtil.registerFunction(vehicleType, "pubOdom", RosVehicle.pubOdom)
-
 end
 
 
@@ -138,7 +137,8 @@ function RosVehicle:addTF(tf_msg, TransformStamped)
 end
 
 
-function RosVehicle:fillLaserData(ros_time, tf_msg, pub_scan)
+function RosVehicle:pubLaserScan(ros_time, tf_msg, pub_scan)
+
     local spec = self.spec_rosVehicle
     -- make sure the vechile is drivable and has laser frame node
     if self:getLaserFrameNode() then

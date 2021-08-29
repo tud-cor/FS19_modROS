@@ -170,10 +170,10 @@ function ModROS:publish_laser_scan_func()
     local ros_time = ros.Time.now()
     if mod_config.control_only_active_one then
         local vehicle = g_currentMission.controlledVehicle
-        vehicle:fillLaserData(ros_time, self.tf_msg, self._pub_scan)
+        vehicle:pubLaserScan(ros_time, self.tf_msg, self._pub_scan)
     else
         for _, vehicle in pairs(g_currentMission.vehicles) do
-            vehicle:fillLaserData(ros_time, self.tf_msg, self._pub_scan)
+            vehicle:pubLaserScan(ros_time, self.tf_msg, self._pub_scan)
         end
     end
 end
