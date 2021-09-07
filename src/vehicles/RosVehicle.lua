@@ -64,6 +64,7 @@ end
 function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
 
     local spec = self.spec_rosVehicle
+    local vehicle_base_link = spec.base_link_frame
 
 
     -- retrieve the vehicle node we're interested in
@@ -96,7 +97,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
     -- more readable than a long list of anonymous args)
     odom_msg.header.frame_id = "odom"
     odom_msg.header.stamp = t
-    odom_msg.child_frame_id = vehicle_name
+    odom_msg.child_frame_id = vehicle_base_link
     -- note the order of the axes here (see earlier comment about FS chirality)
     odom_msg.pose.pose.position.x = p_z
     odom_msg.pose.pose.position.y = p_x
@@ -124,7 +125,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
 
     -- get tf from odom to vehicles
     local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
-    tf_odom_vehicle_link:set("odom", t, vehicle_name, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
+    tf_odom_vehicle_link:set("odom", t, vehicle_base_link, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
     -- update the transforms_array
     self:addTF(tf_msg, tf_odom_vehicle_link)
 
