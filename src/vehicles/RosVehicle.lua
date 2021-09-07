@@ -86,9 +86,6 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
     -- https://gamedev.stackexchange.com/questions/129204/switch-axes-and-handedness-of-a-quaternion
     -- https://stackoverflow.com/questions/18818102/convert-quaternion-representing-rotation-from-one-coordinate-system-to-another
 
-    -- FS time is "frozen" within a single call to update(..), so this
-    -- will assign the same stamp to all Odometry messages
-    local t = ros_time
 
     -- create nav_msgs/Odometry instance
     local odom_msg = nav_msgs_Odometry.new()
@@ -96,7 +93,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
     -- populate fields (not using Odometry:set(..) here as this is much
     -- more readable than a long list of anonymous args)
     odom_msg.header.frame_id = "odom"
-    odom_msg.header.stamp = t
+    odom_msg.header.stamp = ros_time
     odom_msg.child_frame_id = vehicle_base_link
     -- note the order of the axes here (see earlier comment about FS chirality)
     odom_msg.pose.pose.position.x = p_z
@@ -125,7 +122,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
 
     -- get tf from odom to vehicles
     local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
-    tf_odom_vehicle_link:set("odom", t, vehicle_base_link, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
+    tf_odom_vehicle_link:set("odom", ros_time, vehicle_base_link, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
     -- update the transforms_array
     self:addTF(tf_msg, tf_odom_vehicle_link)
 
@@ -159,17 +156,13 @@ function RosVehicle:fillLaserData(ros_time, tf_msg, pub_scan)
                 spec.laser_scan_obj:getLaserData(spec.laser_scan_array, orig_x, orig_y, orig_z, dx, dy, dz)
             end
 
-            -- FS time is "frozen" within a single call to update(..), so this
-            -- will assign the same stamp to all LaserScan messages
-            local t = ros_time
-
             -- create LaserScan instance
             local scan_msg = sensor_msgs_LaserScan.new()
 
             -- populate fields (not using LaserScan:set(..) here as this is much
             -- more readable than a long list of anonymous args)
             scan_msg.header.frame_id = spec.base_link_frame .."/laser_frame_" .. i
-            scan_msg.header.stamp = t
+            scan_msg.header.stamp = ros_time
             -- with zero angle being forward along the x axis, scanning fov +-180 degrees
             scan_msg.angle_min = spec.laser_scan_obj.vehicle_table.laser_scan.angle_min
             scan_msg.angle_max = spec.laser_scan_obj.vehicle_table.laser_scan.angle_max
@@ -198,7 +191,7 @@ function RosVehicle:fillLaserData(ros_time, tf_msg, pub_scan)
             local tf_base_link_laser_frame_i = geometry_msgs_TransformStamped.new()
             tf_base_link_laser_frame_i:set(
                 spec.base_link_frame,
-                t,
+                ros_time,
                 spec.base_link_frame .."/laser_frame_" .. i,
                 -- note the order of the axes here (see earlier comment about FS chirality)
                 base_to_laser_z,
