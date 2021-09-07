@@ -30,10 +30,11 @@ end
 
 
 function RosVehicle.registerFunctions(vehicleType)
-    SpecializationUtil.registerFunction(vehicleType, "getLaserFrameNode", RosVehicle.getLaserFrameNode)
-    SpecializationUtil.registerFunction(vehicleType, "pubOdom", RosVehicle.pubOdom)
     SpecializationUtil.registerFunction(vehicleType, "addTF", RosVehicle.addTF)
     SpecializationUtil.registerFunction(vehicleType, "fillLaserData", RosVehicle.fillLaserData)
+    SpecializationUtil.registerFunction(vehicleType, "getLaserFrameNode", RosVehicle.getLaserFrameNode)
+    SpecializationUtil.registerFunction(vehicleType, "pubOdom", RosVehicle.pubOdom)
+
 end
 
 
