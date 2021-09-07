@@ -21,7 +21,7 @@ function LaserScanner.new(vehicle, vehicle_table)
     local self = {}
     setmetatable(self, LaserScanner_mt)
 
-    -- store a reference to the table
+    -- store a reference to the table with settings for this scanner instance
     self.vehicle_table = vehicle_table
     -- store a referece to current vehicle
     self.vehicle = vehicle
