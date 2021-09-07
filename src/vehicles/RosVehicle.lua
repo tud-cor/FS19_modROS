@@ -65,10 +65,6 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
 
     local spec = self.spec_rosVehicle
 
-    -- legalize a name for ROS
-    -- local vehicle_name = ros.Names.sanatize(vehicle:getFullName() .. "_" .. vehicle.id)
-    local vehicle_name = spec.base_link_frame
-
 
     -- retrieve the vehicle node we're interested in
     local veh_node = self.components[1].node
