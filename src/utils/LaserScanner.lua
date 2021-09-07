@@ -35,6 +35,7 @@ function LaserScanner.new(vehicle, vehicle_table)
     local RC_MASK_TRAILERS = math.pow(2,  8)
     local RC_MASK_DYN_OBJS = math.pow(2, 12)
 
+    -- if provided, use custom collision mask. If not, use default.
     if self.collision_mask then
         self.raycastMask = self.collision_mask
         -- print(("Using custom collision mask for laser scanner: 0x%08X"):format(self.raycastMask))
