@@ -237,7 +237,7 @@ function ModROS:publish_imu_func()
     -- end
 end
 
--- B.5. A command for writing all messages to a named pipe: "rosPubMsg true/false"
+-- B.5. Console command allows to toggle publishers on/off: "rosPubMsg true/false"
 -- messages publisher console command
 addConsoleCommand("rosPubMsg", "write ros messages to named pipe", "rosPubMsg", ModROS)
 function ModROS:rosPubMsg(flag)
