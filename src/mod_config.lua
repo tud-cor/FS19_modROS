@@ -49,6 +49,7 @@ mod_config =
       },
       -- the collision_mask for raycasting can be customized. Both
       -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
+      -- if 'nil', the default mask will be used.
       raycast = {
         collision_mask = nil
       }
