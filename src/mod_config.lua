@@ -19,7 +19,7 @@ author: G.A. vd. Hoorn
 
 mod_config =
 {
-  control_only_active_one = false,
+  control_only_active_vehicle = false,
   vehicle = {
     case_ih_7210_pro = {
       laser_scan = {
