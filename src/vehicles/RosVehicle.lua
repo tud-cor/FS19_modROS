@@ -16,8 +16,8 @@ author: G.A. vd. Hoorn
 
 RosVehicle = {}
 
-RosVehicle.MOD_DIR = g_modROSModDirectory
-RosVehicle.MOD_NAME = g_modROSModName
+-- RosVehicle.MOD_DIR = g_modROSModDirectory
+-- RosVehicle.MOD_NAME = g_modROSModName
 
 
 function RosVehicle.prerequisitesPresent()
@@ -52,7 +52,7 @@ end
 
 function RosVehicle:onLoad()
     -- rosVehicle namespace
-    self.spec_rosVehicle = self["spec_" .. RosVehicle.MOD_NAME .. ".rosVehicle"]
+    self.spec_rosVehicle = self["spec_" .. g_modROSModName .. ".rosVehicle"]
     local spec = self.spec_rosVehicle
     -- rosVehicle variables
     spec.ros_veh_name = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
