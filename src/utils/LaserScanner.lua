@@ -23,7 +23,7 @@ function LaserScanner.new(vehicle, vehicle_table)
 
     -- store a reference to the table with settings for this scanner instance
     self.vehicle_table = vehicle_table
-    -- store a referece to current vehicle
+    -- store a reference to the vehicle this scanner is attached to
     self.vehicle = vehicle
 
     -- initial raycast distance
