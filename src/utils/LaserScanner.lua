@@ -65,7 +65,6 @@ function LaserScanner:getLaserData(laser_scan_array, x, y, z, dx_r, dy, dz_r)
 
     if self.vehicle_table.laser_scan.ignore_terrain then
         if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode and self.raycastTransformId ~= self.vehicle.components[1].node then
-            -- table.insert(self.laser_scan_array, self.raycastDistance/10)
             table.insert(laser_scan_array, self.raycastDistance)
         else
             table.insert(laser_scan_array, self.INIT_RAY_DISTANCE)
