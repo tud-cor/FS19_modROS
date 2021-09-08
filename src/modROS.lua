@@ -59,6 +59,8 @@ maintainer: Ting-Chia Chiang, G.A. vd. Hoorn
 
 --]]
 
+-- ModROS class is not local here
+-- it's now in the global scope so the installSpecializations(..) can be called in loader.lua
 ModROS = {}
 ModROS.MOD_DIR = g_modROSModDirectory
 ModROS.MOD_NAME = g_modROSModName
