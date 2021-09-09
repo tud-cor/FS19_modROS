@@ -53,3 +53,17 @@ source(Utils.getFilename("src/mod_config.lua", directory))
 
 -- main file
 source(Utils.getFilename("src/modROS.lua", directory))
+
+-- LaserScanner class
+source(Utils.getFilename("src/utils/LaserScanner.lua", directory))
+
+
+local function validateVehicleTypes()
+    ModROS.installSpecializations(g_vehicleTypeManager, g_specializationManager, directory, modName)
+end
+
+local function init()
+    VehicleTypeManager.validateVehicleTypes = Utils.prependedFunction(VehicleTypeManager.validateVehicleTypes, validateVehicleTypes)
+end
+
+init()

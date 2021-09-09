@@ -24,24 +24,30 @@ The first one is to publish data, the second one is to subscribe data and the la
 ------------------------------------------------
 ------------------------------------------------
 
-A: Publishing data
-1. sim time publisher - publish the farmsim time
-2. odom publisher - publish the odom data from the game
-3. laser scan publisher - publish the laser scan data (64 rays)
-4. imu publisher - publish the imu data (especially the acc info)
-5. TF publisher - publish tf
-6. A command for writing all messages to a named pipe: "rosPubMsg true/false"
+A. Shared bits of information/infrastructure with RosVehicle spec
+1. getPublisher - instantiate publishers for each spec instance, called from RosVehicle.lua
+
 ------------------------------------------------
 ------------------------------------------------
 
-B. Subscribing data
-1. ros_cmd_teleop subscriber - give the vehicle control to ROS'
+B: Publishing data
+1. sim time publisher - publish in-game simulated clock. This message stops being published when the game is paused/exited
+2. odom publisher - publish ground-truth Pose and Twist of vehicles based on their in-game position and orientation
+3. laser scan publisher - publish the laser scan data
+4. imu publisher - publish the imu data (especially the acc info)
+5. A command for writing all messages to a named pipe: "rosPubMsg true/false"
+
+------------------------------------------------
+------------------------------------------------
+
+C. Subscribing data
+1. ros_cmd_teleop subscriber - give the vehicle control to ROS
 2. A command for taking over control of a vehicle in the game : "rosControlVehicle true/false"
 
 ------------------------------------------------
 ------------------------------------------------
 
-C. Force-centering the camera
+D. Force-centering the camera
 1. A command for force-centering the current camera: "forceCenteredCamera true/false"
 
 ------------------------------------------------
@@ -53,7 +59,9 @@ maintainer: Ting-Chia Chiang, G.A. vd. Hoorn
 
 --]]
 
-local ModROS = {}
+-- ModROS class is not local here
+-- it's now in the global scope so the installSpecializations(..) can be called in loader.lua
+ModROS = {}
 ModROS.MOD_DIR = g_modROSModDirectory
 ModROS.MOD_NAME = g_modROSModName
 ModROS.MOD_VERSION = g_modManager.nameToMod[ModROS.MOD_NAME]["version"]
@@ -73,22 +81,6 @@ function ModROS:loadMap()
     self.l_v_x_0 = 0
     self.l_v_y_0 = 0
     self.l_v_z_0 = 0
-    -- initial raycast distance
-    self.INIT_RAY_DISTANCE = 1000
-    -- set a raycast mask for a camera node which enables bits 5(unkown), 6(tractors), 7(combines), 8(trailers), 12(dynamic_objects)
-    local RC_MASK_UNKNOWN5 = math.pow(2,  5)
-    local RC_MASK_TRACTORS = math.pow(2,  6)
-    local RC_MASK_COMBINES = math.pow(2,  7)
-    local RC_MASK_TRAILERS = math.pow(2,  8)
-    local RC_MASK_DYN_OBJS = math.pow(2, 12)
-
-    if mod_config.raycast.collision_mask then
-        self.raycastMask = mod_config.raycast.collision_mask
-        print(("Using custom collision mask for laser scanner: 0x%08X"):format(self.raycastMask))
-    else
-        self.raycastMask = RC_MASK_UNKNOWN5 + RC_MASK_TRACTORS + RC_MASK_COMBINES + RC_MASK_TRAILERS + RC_MASK_DYN_OBJS
-        print(("Using default collision mask for laser scanner: 0x%08X"):format(self.raycastMask))
-    end
 
     -- initialise connection to the Python side (but do not connect it yet)
     self.path = ModROS.MOD_DIR .. "ROS_messages"
@@ -104,6 +96,15 @@ function ModROS:loadMap()
     print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
 end
 
+function ModROS.installSpecializations(vehicleTypeManager, specializationManager, modDirectory, modName)
+    specializationManager:addSpecialization("rosVehicle", "RosVehicle", Utils.getFilename("src/vehicles/RosVehicle.lua", modDirectory), nil) -- Nil is important here
+
+    for typeName, _ in pairs(vehicleTypeManager:getVehicleTypes()) do
+        vehicleTypeManager:addSpecialization(typeName, modName .. ".rosVehicle")
+    end
+
+end
+
 function ModROS:update(dt)
     -- create TFMessage object
     self.tf_msg = tf2_msgs_TFMessage.new()
@@ -115,13 +116,14 @@ function ModROS:update(dt)
             self:publish_sim_time_func()
             self:publish_veh_func()
             self:publish_laser_scan_func()
-            self:publish_imu_func()
-            self:publish_tf()
+            -- self:publish_imu_func()
+            self._pub_tf:publish(self.tf_msg)
+
         end
     end
 
     if self.doRosControl then
-        self:subscribe_ROScontrol_manned_func(dt)
+        self:subscribe_ROScontrol_func(dt)
     end
     if self.doCenterCamera then
         if g_currentMission.controlledVehicle == nil then
@@ -133,256 +135,51 @@ function ModROS:update(dt)
     end
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.1 sim_time publisher (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+
+-- -- A.1 getPublisher - instantiate publishers for each spec instance, called from RosVehicle.lua
+-- function ModROS:getPublisher(topic_name, topic_type)
+--     local pub = Publisher.new(self._conx, topic_name, topic_type)
+--     return pub
+-- end
+
+
+-- B.1 sim_time publisher: publish the farmsim time
 function ModROS:publish_sim_time_func()
     local msg = rosgraph_msgs_Clock.new()
     msg.clock = ros.Time.now()
     self._pub_clock:publish(msg)
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.2. odom publisher (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
--- a function to publish get the position and orientaion of unmanned or manned vehicle(s) get and write to the named pipe (symbolic link)
+
+-- B.2. odom publisher
+-- a function to publish ground-truth Pose and Twist of all vehicles (including non-drivable) based on their in-game position and orientation
 function ModROS:publish_veh_func()
-    -- vehicle = g_currentMission.controlledVehicle
+    -- FS time is "frozen" within a single call to update(..), so this
+    -- will assign the same stamp to all Odometry messages
+    local ros_time = ros.Time.now()
     for _, vehicle in pairs(g_currentMission.vehicles) do
-
-        -- legalize a name for ROS
-        local vehicle_name = ros.Names.sanatize(vehicle:getFullName() .. "_" .. vehicle.id)
-
-        -- retrieve the vehicle node we're interested in
-        local veh_node = vehicle.components[1].node
-
-        -- retrieve global (ie: world) coordinates of this node
-        local p_x, p_y, p_z = getWorldTranslation(veh_node)
-
-        -- retrieve global (ie: world) quaternion of this node
-        local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
-
-        -- get twist data
-        local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
-        -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
-
-
-        -- convert y up world to z up world (farmsim coordinate system: x right, z towards me, y up; ROS: y right, x towards me, z up)
-        -- https://stackoverflow.com/questions/16099979/can-i-switch-x-y-z-in-a-quaternion
-        -- https://gamedev.stackexchange.com/questions/129204/switch-axes-and-handedness-of-a-quaternion
-        -- https://stackoverflow.com/questions/18818102/convert-quaternion-representing-rotation-from-one-coordinate-system-to-another
-
-        -- FS time is "frozen" within a single call to update(..), so this
-        -- will assign the same stamp to all Odometry messages
-        local t = ros.Time.now()
-
-        -- create nav_msgs/Odometry instance
-        local odom_msg = nav_msgs_Odometry.new()
-
-        -- populate fields (not using Odometry:set(..) here as this is much
-        -- more readable than a long list of anonymous args)
-        odom_msg.header.frame_id = "odom"
-        odom_msg.header.stamp = t
-        odom_msg.child_frame_id = vehicle_name
-        -- note the order of the axes here (see earlier comment about FS chirality)
-        odom_msg.pose.pose.position.x = p_z
-        odom_msg.pose.pose.position.y = p_x
-        odom_msg.pose.pose.position.z = p_y
-        -- note again the order of the axes
-        odom_msg.pose.pose.orientation.x = q_z
-        odom_msg.pose.pose.orientation.y = q_x
-        odom_msg.pose.pose.orientation.z = q_y
-        odom_msg.pose.pose.orientation.w = q_w
-        -- since the train returns nil when passed to getLocalLinearVelocity, set 0 to prevent an error
-        if l_v_x == nil then
-            odom_msg.twist.twist.linear.x = 0
-            odom_msg.twist.twist.linear.y = 0
-            odom_msg.twist.twist.linear.z = 0
-        else
-        -- note again the order of the axes
-            odom_msg.twist.twist.linear.x = l_v_z
-            odom_msg.twist.twist.linear.y = l_v_x
-            odom_msg.twist.twist.linear.z = l_v_y
-        end
-        -- TODO get AngularVelocity wrt local vehicle frame
-        -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
-
-        -- publish the message
-        self._pub_odom:publish(odom_msg)
-
-        -- get tf from odom to vehicles
-        -- setting case_ih_7210_pro_9 as our robot (note: the numbber "_9" might differ depending on your vehicle.xml)
-        if vehicle_name == mod_config.controlled_vehicle.base_link_frame_id then
-            -- update the transforms_array
-            local tf_odom_base_link = geometry_msgs_TransformStamped.new()
-            tf_odom_base_link:set("odom", t, "base_link", p_z, p_x, p_y, q_z, q_x, q_y, q_w)
-            self.tf_msg:add_transform(tf_odom_base_link)
-        else
-            -- update the transforms_array
-            local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
-            tf_odom_vehicle_link:set("odom", t, vehicle_name, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
-            self.tf_msg:add_transform(tf_odom_vehicle_link)
-        end
+        vehicle:pubOdom(ros_time, self.tf_msg, self._pub_odom)
     end
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.3. laser scan publisher  (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
-function ModROS:laser_data_gen(x, y, z, dx_r, dy, dz_r)
-    self.raycastDistance = self.INIT_RAY_DISTANCE
-    raycastClosest(x, y, z, dx_r, dy, dz_r, "raycastCallback", mod_config.laser_scan.range_max, self, self.raycastMask)
 
-    -- push back the self.raycastDistance to self.laser_scan_array table
-    -- if  self.raycastDistance is updated which mean there is object detected and raycastCallback is called
-    -- otherwise, fill the range with self.INIT_RAY_DISTANCE (1000) (no object detected)
-
-    -- if laser_scan.ignore_terrain is set true then ignore the terrain when detected
-    if mod_config.laser_scan.ignore_terrain then
-        if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode then
-            -- table.insert(self.laser_scan_array, self.raycastDistance/10)
-            table.insert(self.laser_scan_array, self.raycastDistance)
-        else
-            table.insert(self.laser_scan_array, self.INIT_RAY_DISTANCE)
-        end
-    else
-        if self.raycastDistance ~= self.INIT_RAY_DISTANCE then
-            -- table.insert(self.laser_scan_array, self.raycastDistance/10)
-            table.insert(self.laser_scan_array, self.raycastDistance)
-        else
-            table.insert(self.laser_scan_array, self.INIT_RAY_DISTANCE)
-        end
-    end
-
-end
-
+-- B.3. laser scan publisher
 function ModROS:publish_laser_scan_func()
-    local radius = 0.2
-    -- cache locally
-    local cos = math.cos
-    local sin = math.sin
-    local LS_FOV = mod_config.laser_scan.angle_max - mod_config.laser_scan.angle_min
-    -- calculate nr of steps between rays
-    local delta_theta = LS_FOV / (mod_config.laser_scan.num_rays - 1)
-
-    for i = 0, mod_config.laser_scan.num_layers-1 do
-        self.laser_scan_array = {}
-        -- get the (world) coordinate of each laser scanner's origin: (orig_x, orig_y, orig_z)
-        -- "laser_dy" is added between the scanning planes, along +y direction (locally) from the lowest laser scan plane
-        -- and all laser scan planes are parallel to each other
-        local laser_dy = mod_config.laser_scan.inter_layer_distance * i
-        local orig_x, orig_y, orig_z = localToWorld(self.laser_frame_1, 0, laser_dy, 0)
-
-        for j = 0, (mod_config.laser_scan.num_rays - 1) do
-            local seg_theta = j * delta_theta
-            -- (i_laser_dx, 0 , i_laser_dz) is a local space direction to define the world space raycasting (scanning) direction
-            local i_laser_dx = -sin(seg_theta) * radius
-            local i_laser_dz = -cos(seg_theta) * radius
-            local dx, dy, dz = localDirectionToWorld(self.laser_frame_1, i_laser_dx, 0 , i_laser_dz)
-            self:laser_data_gen(orig_x, orig_y, orig_z, dx, dy, dz)
+    -- FS time is "frozen" within a single call to update(..), so this
+    -- will assign the same stamp to all LaserScan messages
+    local ros_time = ros.Time.now()
+    if mod_config.control_only_active_one then
+        local vehicle = g_currentMission.controlledVehicle
+        vehicle:fillLaserData(ros_time, self.tf_msg, self._pub_scan)
+    else
+        for _, vehicle in pairs(g_currentMission.vehicles) do
+            vehicle:fillLaserData(ros_time, self.tf_msg, self._pub_scan)
         end
-
-        -- FS time is "frozen" within a single call to update(..), so this
-        -- will assign the same stamp to all LaserScan messages
-        local t = ros.Time.now()
-
-        -- create LaserScan instance
-        local scan_msg = sensor_msgs_LaserScan.new()
-
-        -- populate fields (not using LaserScan:set(..) here as this is much
-        -- more readable than a long list of anonymous args)
-        scan_msg.header.frame_id = "laser_frame_" .. i
-        scan_msg.header.stamp = t
-        -- with zero angle being forward along the x axis, scanning fov +-180 degrees
-        scan_msg.angle_min = mod_config.laser_scan.angle_min
-        scan_msg.angle_max = mod_config.laser_scan.angle_max
-        scan_msg.angle_increment = LS_FOV / mod_config.laser_scan.num_rays
-        -- assume sensor gives 50 scans per second
-        scan_msg.time_increment = (1.0 / 50) / mod_config.laser_scan.num_rays
-        --scan_msg.scan_time = 0.0  -- we don't set this field (TODO: should we?)
-        scan_msg.range_min = mod_config.laser_scan.range_min
-        scan_msg.range_max = mod_config.laser_scan.range_max
-        scan_msg.ranges = self.laser_scan_array
-        --scan_msg.intensities = {}  -- we don't set this field (TODO: should we?)
-
-        -- publish the message
-        self._pub_scan:publish(scan_msg)
-
-        -- convert to quaternion for ROS TF
-        -- note the order of the axes here (see earlier comment about FS chirality)
-        -- the rotation from base_link to raycastnode is the same as rotation from raycastnode to virtaul laser_frame_i as there is no rotation between base_link to raycastnode
-        local q = ros.Transformations.quaternion_from_euler(mod_config.laser_scan.laser_transform.rotation.z, mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y)
-
-        -- get the translation from base_link to laser_frame_i
-        -- laser_dy is the offset from laser_frame_i to laser_frame_i+1
-        local base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(self.laser_frame_1, g_currentMission.controlledVehicle.components[1].node, 0, laser_dy, 0)
-
-        -- create single TransformStamped message
-        local tf_base_link_laser_frame_i = geometry_msgs_TransformStamped.new()
-        tf_base_link_laser_frame_i:set(
-            "base_link",
-            t,
-            "laser_frame_" .. i,
-            -- note the order of the axes here (see earlier comment about FS chirality)
-            base_to_laser_z,
-            base_to_laser_x,
-            base_to_laser_y,
-            -- we don't need to swap the order of q, since the calculation of q is based on the ROS chirality
-            q[1],
-            q[2],
-            q[3],
-            q[4]
-        )
-        self.tf_msg:add_transform(tf_base_link_laser_frame_i)
     end
 end
 
-function ModROS:raycastCallback(transformId, _, _, _, distance, _, _, _)
-    self.raycastDistance = distance
-    self.raycastTransformId = transformId
-    -- for debugging
-    -- self.object = g_currentMission:getNodeObject(self.raycastTransformId)
-    -- print(string.format("hitted object is %s",getName(self.raycastTransformId)))
-    -- print(string.format("hitted object id is %f",self.raycastTransformId))
-    -- print(string.format("self.raycastDistance is %f",self.raycastDistance))
-    -- print("v_id ",g_currentMission.controlledVehicle.components[1].node)
-end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.4. imu publisher (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+-- B.4. imu publisher
 -- a function to publish get the position and orientaion of unmanned or manned vehicle(s) get and write to the named pipe (symbolic link)
 function ModROS:publish_imu_func()
     local vehicle = g_currentMission.controlledVehicle
@@ -444,32 +241,7 @@ function ModROS:publish_imu_func()
     -- end
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.5. TF publisher (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
-function ModROS:publish_tf()
-    self._pub_tf:publish(self.tf_msg)
-end
-
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- A.6. A command for writing all messages to a named pipe: "rosPubMsg true/false"
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+-- B.5. Console command allows to toggle publishers on/off: "rosPubMsg true/false"
 -- messages publisher console command
 addConsoleCommand("rosPubMsg", "write ros messages to named pipe", "rosPubMsg", ModROS)
 function ModROS:rosPubMsg(flag)
@@ -489,44 +261,6 @@ function ModROS:rosPubMsg(flag)
                 return
             end
         end
-
-        -- raycastNode initialization
-        local vehicle = g_currentMission.controlledVehicle
-        -- if the player is not in the vehicle, print error and return
-        if not vehicle then
-            print("You are not inside any vehicle, come on! Enter 'e' to hop in one next to you!")
-            return
-        else
-            self.instance_veh = VehicleCamera:new(vehicle, ModROS)
-            local xml_path = self.instance_veh.vehicle.configFileName
-            local xmlFile = loadXMLFile("vehicle", xml_path)
-            -- index 0 is outdoor camera; index 1 is indoor camera
-            -- local cameraKey = string.format("vehicle.enterable.cameras.camera(%d)", 0)
-
-            --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
-            --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)
-
-            local cameraKey = string.format("vehicle.enterable.cameras.camera(%d).raycastNode(0)", 0)
-            XMLUtil.checkDeprecatedXMLElements(xmlFile, xml_path, cameraKey .. "#index", "#node") -- FS17 to FS19
-            local camIndexStr = getXMLString(xmlFile, cameraKey .. "#node")
-            self.instance_veh.cameraNode =
-                I3DUtil.indexToObject(
-                self.instance_veh.vehicle.components,
-                camIndexStr,
-                self.instance_veh.vehicle.i3dMappings
-            )
-            if self.instance_veh.cameraNode == nil then
-                print("nil camera")
-            -- else
-            --     print(instance_veh.cameraNode)
-            end
-            -- create self.laser_frame_1 attached to raycastNode (x left, y up, z into the page)
-            -- and apply a transform to the self.laser_frame_1
-            local tran_x, tran_y, tran_z = mod_config.laser_scan.laser_transform.translation.x, mod_config.laser_scan.laser_transform.translation.y, mod_config.laser_scan.laser_transform.translation.z
-            local rot_x, rot_y, rot_z = mod_config.laser_scan.laser_transform.rotation.x, mod_config.laser_scan.laser_transform.rotation.y, mod_config.laser_scan.laser_transform.rotation.z
-            self.laser_frame_1 = frames.create_attached_node(self.instance_veh.cameraNode, "self.laser_frame_1", tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
-        end
-
         -- initialisation was successful
         self.doPubMsg = true
 
@@ -543,102 +277,64 @@ function ModROS:rosPubMsg(flag)
     end
 end
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- B.1. ros_cmd_teleop subscriber (TODO:add description)
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
--- a function to load the ROS joystick state from XML file to take over control of manned vehicle in the game
-function ModROS:subscribe_ROScontrol_manned_func(dt)
-    if g_currentMission.controlledVehicle == nil then
-        print("You have left your vehicle, come on! Please hop in one and type the command again!")
-        self.doRosControl = false
-    elseif g_currentMission.controlledVehicle ~= nil and self.v_ID ~= nil then
-        -- retrieve the first 32 chars from the buffer
-        -- note: this does not remove them, it simply copies them
-        local buf_read = self.buf:read(64)
 
-        -- print to the game console if what we've found in the buffer is different
-        -- from what was there the previous iteration
-        -- the counter is just there to make sure we don't see the same line twice
-        local allowedToDrive = false
-        if buf_read ~= self.last_read and buf_read ~= "" then
-            self.last_read = buf_read
-            local read_str_list = {}
-            -- loop over whitespace-separated components
-            for read_str in string.gmatch(self.last_read, "%S+") do
-                table.insert(read_str_list, read_str)
+-- C.1. ros_cmd_teleop subscriber
+-- a function to input the ROS geometry_msgs/Twist into the game to take over control of all vehicles
+function ModROS:subscribe_ROScontrol_func(dt)
+    for _, vehicle in pairs(g_currentMission.vehicles) do
+        if vehicle.spec_drivable then
+            -- retrieve the first 32 chars from the buffer
+            -- note: this does not remove them, it simply copies them
+            local buf_read = self.buf:read(64)
+
+            -- print to the game console if what we've found in the buffer is different
+            -- from what was there the previous iteration
+            -- the counter is just there to make sure we don't see the same line twice
+            local allowedToDrive = false
+            if buf_read ~= self.last_read and buf_read ~= "" then
+                self.last_read = buf_read
+                local read_str_list = {}
+                -- loop over whitespace-separated components
+                for read_str in string.gmatch(self.last_read, "%S+") do
+                    table.insert(read_str_list, read_str)
+                end
+
+                self.acc = tonumber(read_str_list[1])
+                self.rotatedTime_param = tonumber(read_str_list[2])
+                allowedToDrive = read_str_list[3]
             end
 
-            self.acc = tonumber(read_str_list[1])
-            self.rotatedTime_param = tonumber(read_str_list[2])
-            allowedToDrive = read_str_list[3]
-        end
+            if allowedToDrive == "true" then
+                self.allowedToDrive = true
+            elseif allowedToDrive == "false" then
+                self.allowedToDrive = false
+            end
 
-        if allowedToDrive == "true" then
-            self.allowedToDrive = true
-        elseif allowedToDrive == "false" then
-            self.allowedToDrive = false
+            vehicle_util.ROSControl(vehicle, dt, self.acc, self.allowedToDrive, self.rotatedTime_param)
         end
-
-        vehicle_util.ROSControl(self.vehicle, dt, self.acc, self.allowedToDrive, self.rotatedTime_param)
     end
 end
 
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- B.2. A command for taking over control of a vehicle in the game : "rosControlVehicle true/false"
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
+
+-- C.2. A command for taking over control of a vehicle in the game : "rosControlVehicle true/false"
 
 -- TODO Allow control of vehicles other than the 'active one'. (the console name has already been changed, but the implementation hasn't yet)
 
---  console command to take over control of manned vehicle in the game
+--  console command to take over control of all vehicles in the game
 addConsoleCommand("rosControlVehicle", "let ROS control the current vehicle", "rosControlVehicle", ModROS)
 function ModROS:rosControlVehicle(flag)
-    if flag ~= nil and flag ~= "" and flag == "true" and g_currentMission.controlledVehicle ~= nil then
-        self.vehicle = g_currentMission.controlledVehicle
-        self.v_ID = g_currentMission.controlledVehicle.components[1].node
+    if flag ~= nil and flag ~= "" and flag == "true" then
         self.doRosControl = true
         print("start ROS teleoperation")
-    elseif g_currentMission.controlledVehicle == nil then
-        print("you are not inside any vehicle, come on! Enter 'e' to hop in one next to you!")
     elseif flag == nil or flag == "" or flag == "false" then
         self.doRosControl = false
         print("stop ROS teleoperation")
-
-    -- self.acc = 0
-    -- self.rotatedTime_param  = 0
-    -- self.allowedToDrive = false
     end
 end
 
 
---[[
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
--- C.1 A command for force-centering the current camera: "forceCenteredCamera true/false"
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
-------------------------------------------------
---]]
-
+-- D.1 A command for force-centering the current camera: "forceCenteredCamera true/false"
 -- centering the camera by setting the camera rotX, rotY to original angles
 addConsoleCommand("forceCenteredCamera", "force-center the current camera", "forceCenteredCamera", ModROS)
 function ModROS:forceCenteredCamera(flag)

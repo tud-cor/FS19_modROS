@@ -13,6 +13,7 @@ exclude_files = {"src/utils/json.lua", "src/utils/shared_memory_segment.lua"}
 
 stds.modROS = {
     globals = {
+        "ModROS",
         "g_modROSModDirectory",
         "g_modROSModName",
         "geometry_msgs_TransformStamped",
@@ -27,6 +28,8 @@ stds.modROS = {
         "frames",
         "Publisher",
         "WriteOnlyFileConnection",
+        "LaserScanner",
+        "RosVehicle",
     }
 }
 
@@ -289,6 +292,7 @@ stds.fs19_vars = {
 
 stds.fs19_other = {
     globals = {
+        "VehicleTypeManager",
     },
     read_globals = {
         "_VERSION",
@@ -1125,7 +1129,6 @@ stds.fs19_other = {
         "VehicleSetLightEvent",
         "VehicleSetTurnLightEvent",
         "VehicleShopBase",
-        "VehicleTypeManager",
         "VendingMachine",
         "VideoElement",
         "VisualTrailer",
