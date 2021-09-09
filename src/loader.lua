@@ -58,12 +58,12 @@ source(Utils.getFilename("src/modROS.lua", directory))
 source(Utils.getFilename("src/utils/LaserScanner.lua", directory))
 
 
-function init()
-    VehicleTypeManager.validateVehicleTypes = Utils.prependedFunction(VehicleTypeManager.validateVehicleTypes, validateVehicleTypes)
+local function validateVehicleTypes()
+    ModROS.installSpecializations(g_vehicleTypeManager, g_specializationManager, directory, modName)
 end
 
-function validateVehicleTypes(vehicleTypeManager)
-    ModROS.installSpecializations(g_vehicleTypeManager, g_specializationManager, directory, modName)
+local function init()
+    VehicleTypeManager.validateVehicleTypes = Utils.prependedFunction(VehicleTypeManager.validateVehicleTypes, validateVehicleTypes)
 end
 
 init()
