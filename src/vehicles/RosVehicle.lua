@@ -138,76 +138,10 @@ end
 
 
 function RosVehicle:fillLaserData(ros_time, tf_msg, pub_scan)
-
     local spec = self.spec_rosVehicle
     -- make sure the vechile is drivable and has laser frame node
     if self:getLaserFrameNode() then
-        for i = 0, spec.laser_scan_obj.vehicle_table.laser_scan.num_layers-1 do
-            spec.laser_scan_array = {}
-            -- get the (world) coordinate of each laser scanner's origin: (orig_x, orig_y, orig_z)
-            -- "laser_dy" is added between the scanning planes, along +y direction (locally) from the lowest laser scan plane
-            -- and all laser scan planes are parallel to each other
-            local laser_dy = spec.laser_scan_obj.vehicle_table.laser_scan.inter_layer_distance * i
-            local orig_x, orig_y, orig_z = localToWorld(spec.LaserFrameNode, 0, laser_dy, 0)
-
-            for j = 0, (spec.laser_scan_obj.vehicle_table.laser_scan.num_rays - 1) do
-                local seg_theta = j * spec.laser_scan_obj.delta_theta
-                -- (i_laser_dx, 0 , i_laser_dz) is a local space direction to define the world space raycasting (scanning) direction
-                local i_laser_dx = -spec.laser_scan_obj.sin(seg_theta) * spec.laser_scan_obj.radius
-                local i_laser_dz = -spec.laser_scan_obj.cos(seg_theta) * spec.laser_scan_obj.radius
-                local dx, dy, dz = localDirectionToWorld(spec.LaserFrameNode, i_laser_dx, 0 , i_laser_dz)
-                spec.laser_scan_obj:getLaserData(spec.laser_scan_array, orig_x, orig_y, orig_z, dx, dy, dz)
-            end
-
-            -- create LaserScan instance
-            local scan_msg = sensor_msgs_LaserScan.new()
-
-            -- populate fields (not using LaserScan:set(..) here as this is much
-            -- more readable than a long list of anonymous args)
-            scan_msg.header.frame_id = spec.base_link_frame .."/laser_frame_" .. i
-            scan_msg.header.stamp = ros_time
-            -- with zero angle being forward along the x axis, scanning fov +-180 degrees
-            scan_msg.angle_min = spec.laser_scan_obj.vehicle_table.laser_scan.angle_min
-            scan_msg.angle_max = spec.laser_scan_obj.vehicle_table.laser_scan.angle_max
-            scan_msg.angle_increment = spec.laser_scan_obj.LS_FOV / spec.laser_scan_obj.vehicle_table.laser_scan.num_rays
-            -- assume sensor gives 50 scans per second
-            scan_msg.time_increment = (1.0 / 50) / spec.laser_scan_obj.vehicle_table.laser_scan.num_rays
-            --scan_msg.scan_time = 0.0  -- we don't set this field (TODO: should we?)
-            scan_msg.range_min = spec.laser_scan_obj.vehicle_table.laser_scan.range_min
-            scan_msg.range_max = spec.laser_scan_obj.vehicle_table.laser_scan.range_max
-            scan_msg.ranges = spec.laser_scan_array
-            --scan_msg.intensities = {}  -- we don't set this field (TODO: should we?)
-
-            -- publish the message
-            pub_scan:publish(scan_msg)
-
-            -- convert to quaternion for ROS TF
-            -- note the order of the axes here (see earlier comment about FS chirality)
-            -- the rotation from base_link to raycastnode is the same as rotation from raycastnode to virtaul laser_frame_i as there is no rotation between base_link to raycastnode
-            local q = ros.Transformations.quaternion_from_euler(spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.z, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.y)
-
-            -- get the translation from base_link to laser_frame_i
-            -- laser_dy is the offset from laser_frame_i to laser_frame_i+1
-            local base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(spec.LaserFrameNode, self.components[1].node, 0, laser_dy, 0)
-
-            -- create single TransformStamped message
-            local tf_base_link_laser_frame_i = geometry_msgs_TransformStamped.new()
-            tf_base_link_laser_frame_i:set(
-                spec.base_link_frame,
-                ros_time,
-                spec.base_link_frame .."/laser_frame_" .. i,
-                -- note the order of the axes here (see earlier comment about FS chirality)
-                base_to_laser_z,
-                base_to_laser_x,
-                base_to_laser_y,
-                -- we don't need to swap the order of q, since the calculation of q is based on the ROS chirality
-                q[1],
-                q[2],
-                q[3],
-                q[4]
-            )
-            self:addTF(tf_msg, tf_base_link_laser_frame_i)
-        end
+        spec.laser_scan_obj:doScan(ros_time, tf_msg, pub_scan)
     end
 end
 
