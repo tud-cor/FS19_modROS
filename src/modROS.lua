@@ -154,8 +154,10 @@ end
 -- B.2. odom publisher
 -- a function to publish ground-truth Pose and Twist of all vehicles (including non-drivable) based on their in-game position and orientation
 function ModROS:publish_veh_func()
+    -- FS time is "frozen" within a single call to update(..), so this
+    -- will assign the same stamp to all Odometry messages
+    local ros_time = ros.Time.now()
     for _, vehicle in pairs(g_currentMission.vehicles) do
-        local ros_time = ros.Time.now()
         vehicle:pubOdom(ros_time, self.tf_msg, self._pub_odom)
     end
 end
@@ -163,14 +165,14 @@ end
 
 -- B.3. laser scan publisher
 function ModROS:publish_laser_scan_func()
-
+    -- FS time is "frozen" within a single call to update(..), so this
+    -- will assign the same stamp to all LaserScan messages
+    local ros_time = ros.Time.now()
     if mod_config.control_only_active_one then
         local vehicle = g_currentMission.controlledVehicle
-        local ros_time = ros.Time.now()
         vehicle:fillLaserData(ros_time, self.tf_msg, self._pub_scan)
     else
         for _, vehicle in pairs(g_currentMission.vehicles) do
-            local ros_time = ros.Time.now()
             vehicle:fillLaserData(ros_time, self.tf_msg, self._pub_scan)
         end
     end
