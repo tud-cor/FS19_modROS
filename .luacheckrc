@@ -292,6 +292,7 @@ stds.fs19_vars = {
 
 stds.fs19_other = {
     globals = {
+        "VehicleTypeManager",
     },
     read_globals = {
         "_VERSION",
@@ -1128,7 +1129,6 @@ stds.fs19_other = {
         "VehicleSetLightEvent",
         "VehicleSetTurnLightEvent",
         "VehicleShopBase",
-        "VehicleTypeManager",
         "VendingMachine",
         "VideoElement",
         "VisualTrailer",
