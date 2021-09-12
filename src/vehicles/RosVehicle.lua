@@ -20,8 +20,8 @@ RosVehicle = {}
 -- RosVehicle.MOD_NAME = g_modROSModName
 
 
-function RosVehicle.prerequisitesPresent()
-    return true
+function RosVehicle.prerequisitesPresent(specializations)
+    return SpecializationUtil.hasSpecialization(Drivable, specializations)
 end
 
 
