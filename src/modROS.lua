@@ -130,13 +130,6 @@ function ModROS:update(dt)
 end
 
 
--- -- A.1 getPublisher - instantiate publishers for each spec instance, called from RosVehicle.lua
--- function ModROS:getPublisher(topic_name, topic_type)
---     local pub = Publisher.new(self._conx, topic_name, topic_type)
---     return pub
--- end
-
-
 -- A.1 sim_time publisher: publish the farmsim time
 function ModROS:publish_sim_time_func()
     local msg = rosgraph_msgs_Clock.new()
