@@ -35,6 +35,8 @@ mod_config =
         laser_transform = {
           translation = {
               x = 0.0,
+              -- This lowers the origin of the scanner to be more in at an expected hight
+              -- since the original attachment point is on the bonnet and it's too high to see important obstacles
               y = -1.5,
               z = 0.0
           },
@@ -68,6 +70,8 @@ mod_config =
         laser_transform = {
           translation = {
               x = 0.0,
+              -- This lowers the origin of the scanner to be more in at an expected hight
+              -- since the original attachment point is on the bonnet and it's too high to see important obstacles
               y = -1.5,
               z = 0.0
           },
@@ -100,6 +104,8 @@ mod_config =
         laser_transform = {
           translation = {
               x = 0.0,
+              -- This lowers the origin of the scanner to be more in at an expected hight
+              -- since the original attachment point is on the bonnet and it's too high to see important obstacles
               y = -1.5,
               z = 0.0
           },
@@ -132,6 +138,8 @@ mod_config =
         laser_transform = {
           translation = {
               x = 0.0,
+              -- This lowers the origin of the scanner to be more in at an expected hight
+              -- since the original attachment point is on the bonnet and it's too high to see important obstacles
               y = -3,
               z = 0.0
           },
