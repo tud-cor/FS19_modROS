@@ -68,8 +68,6 @@ function RosVehicle:onLoad()
     spec.instance_veh = VehicleCamera:new(self, RosVehicle)
     spec.xml_path = spec.instance_veh.vehicle.configFileName
     spec.xmlFile = loadXMLFile("vehicle", spec.xml_path)
-
-
 end
 
 
