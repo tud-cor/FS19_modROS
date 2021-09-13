@@ -23,6 +23,7 @@ mod_config =
   vehicle = {
     case_ih_7210_pro = {
       laser_scan = {
+        is_mounted = true,
         num_rays = 64,
         num_layers = 2,
         angle_min = -math.pi,
@@ -58,6 +59,7 @@ mod_config =
     },
     diesel_locomotive = {
       laser_scan = {
+        is_mounted = false,
         num_rays = 64,
         num_layers = 2,
         angle_min = -math.pi,
@@ -92,6 +94,7 @@ mod_config =
     },
     fiat_1300dt = {
       laser_scan = {
+        is_mounted = true,
         num_rays = 64,
         num_layers = 2,
         angle_min = -math.pi,
@@ -126,6 +129,7 @@ mod_config =
     },
     new_holland_tx_32 = {
       laser_scan = {
+        is_mounted = true,
         num_rays = 64,
         num_layers = 2,
         angle_min = -math.pi,
