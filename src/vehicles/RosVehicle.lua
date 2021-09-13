@@ -258,6 +258,4 @@ function RosVehicle:pubImu(ros_time, pub_imu)
     -- publish the message
     pub_imu:publish_with_ns(imu_msg, spec.ros_veh_name_w_id)
 
-    -- end
-    -- end
 end
