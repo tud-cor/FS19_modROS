@@ -163,13 +163,17 @@ function RosVehicle:getLaserFrameNode()
     local spec = self.spec_rosVehicle
 
     if self.spec_drivable then
-        local current_veh_name = ros.Names.sanatize(self:getFullName())
 
-        -- if there is no custom laser scanner for this vehicle, use the default settings
-        if not mod_config.vehicle[current_veh_name] then
+        -- if there is no custom laser scanner setting for this vehicle, use the default settings to initialize an object of LaserScanner class
+        -- note: a laser scanner is always mounted in the default settings
+        if not mod_config.vehicle[spec.ros_veh_name] then
             spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle["default_vehicle"])
+        -- if the custom laser scanner is mounted (parameter is_mounted = true), initialize an object of LaserScanner class
+        elseif mod_config.vehicle[spec.ros_veh_name].laser_scan.is_mounted then
+            spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[spec.ros_veh_name])
+        -- if the custom laser scanner is not mounted (parameter is_mounted = false), do not initialize an object of LaserScanner class
         else
-            spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[current_veh_name])
+            return
         end
         --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
         --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)

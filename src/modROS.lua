@@ -155,13 +155,8 @@ function ModROS:publish_laser_scan_func()
     -- FS time is "frozen" within a single call to update(..), so this
     -- will assign the same stamp to all LaserScan messages
     local ros_time = ros.Time.now()
-    if mod_config.control_only_active_one then
-        local vehicle = g_currentMission.controlledVehicle
+    for _, vehicle in pairs(g_currentMission.vehicles) do
         vehicle:pubLaserScan(ros_time, self.tf_msg, self._pub_scan)
-    else
-        for _, vehicle in pairs(g_currentMission.vehicles) do
-            vehicle:pubLaserScan(ros_time, self.tf_msg, self._pub_scan)
-        end
     end
 end
 
