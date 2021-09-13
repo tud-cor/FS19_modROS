@@ -56,8 +56,9 @@ function RosVehicle:onLoad()
     local spec = self.spec_rosVehicle
     -- rosVehicle variables
     -- .id is initialized by FS
-    spec.ros_veh_name = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
-    spec.base_link_frame = spec.ros_veh_name .. "/base_link"
+    spec.ros_veh_name_w_id = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
+    spec.ros_veh_name = ros.Names.sanatize(self:getFullName())
+    spec.base_link_frame = spec.ros_veh_name_w_id .. "/base_link"
     spec.l_v_x_0 = 0
     spec.l_v_y_0 = 0
     spec.l_v_z_0 = 0
@@ -132,7 +133,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
     -- TODO get AngularVelocity wrt local vehicle frame
     -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
     -- publish the message
-    pub_odom:publish_with_ns(odom_msg, spec.ros_veh_name)
+    pub_odom:publish_with_ns(odom_msg, spec.ros_veh_name_w_id)
 
     -- get tf from odom to vehicles
     local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
@@ -253,7 +254,7 @@ function RosVehicle:pubImu(ros_time, pub_imu)
     imu_msg.linear_acceleration.z = acc_y
 
     -- publish the message
-    pub_imu:publish_with_ns(imu_msg, spec.ros_veh_name)
+    pub_imu:publish_with_ns(imu_msg, spec.ros_veh_name_w_id)
 
     -- end
     -- end
