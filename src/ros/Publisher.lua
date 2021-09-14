@@ -55,7 +55,7 @@ function Publisher:delete()
     -- nothing to do. Connection object is not owned by this Publisher
 end
 
-function Publisher:publish(msg)
+function Publisher:publish(msg, topic_name)
     if msg.ROS_MSG_NAME ~= self._message_type_name then
         return nil, ("Can't publish '%s' with publisher of type '%s'"):format(msg.ROS_MSG_NAME, self._message_type_name)
     end
@@ -64,23 +64,10 @@ function Publisher:publish(msg)
     end
 
     -- try writing the serialised message to the connection
-    local ret, err = self._conx:write(msg.ROS_MSG_NAME .. "\n" .. msg:to_json())
-    if not ret then
-        return nil, "Error publishing message: '" .. err .. "'"
-    end
-    return ret
-end
-
-function Publisher:publish_with_ns(msg, vehicle_ns)
-    if msg.ROS_MSG_NAME ~= self._message_type_name then
-        return nil, ("Can't publish '%s' with publisher of type '%s'"):format(msg.ROS_MSG_NAME, self._message_type_name)
-    end
-    if not self._conx:is_connected() then
-        return nil, "Can't write to nil fd"
-    end
-
-    -- try writing the serialised message to the connection
-    local ret, err = self._conx:write(vehicle_ns .. "\n" .. msg.ROS_MSG_NAME .. "\n" .. msg:to_json())
+    -- "topic_name" could be with or without namespace
+    -- with e.g. "<ros_veh_name_with_id>/odom"
+    -- wihtout e.g. "clock"
+    local ret, err = self._conx:write(topic_name .. "\n" .. msg.ROS_MSG_NAME .. "\n" .. msg:to_json())
     if not ret then
         return nil, "Error publishing message: '" .. err .. "'"
     end
