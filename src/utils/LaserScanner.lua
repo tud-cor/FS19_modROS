@@ -142,8 +142,7 @@ function LaserScanner:doScan(ros_time, tf_msg)
         --scan_msg.intensities = {}  -- we don't set this field (TODO: should we?)
 
         -- publish the message
-        local topic_name = spec.ros_veh_name_with_id .. "/scan"
-        pub_scan:publish(scan_msg, topic_name)
+        spec.pub_scan:publish(scan_msg)
 
         -- convert to quaternion for ROS TF
         -- note the order of the axes here (see earlier comment about FS chirality)

@@ -136,8 +136,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg)
     -- TODO get AngularVelocity wrt local vehicle frame
     -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
     -- publish the message
-    local topic_name = spec.ros_veh_name_with_id .. "/odom"
-    pub_odom:publish(odom_msg, topic_name)
+    spec.pub_odom:publish(odom_msg)
 
     -- get tf from odom to vehicles
     local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
@@ -262,7 +261,6 @@ function RosVehicle:pubImu(ros_time)
     imu_msg.linear_acceleration.z = acc_y
 
     -- publish the message
-    local topic_name = spec.ros_veh_name_with_id .. "/imu"
-    pub_imu:publish(imu_msg, topic_name)
+    spec.pub_imu:publish(imu_msg)
 
 end
