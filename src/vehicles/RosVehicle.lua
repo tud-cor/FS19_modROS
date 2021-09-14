@@ -21,6 +21,7 @@ RosVehicle = {}
 
 
 function RosVehicle.prerequisitesPresent(specializations)
+    -- make <drivable> spec as a prerequisite for now so that we only control vehicles which are drivable
     return SpecializationUtil.hasSpecialization(Drivable, specializations)
 end
 
@@ -50,6 +51,7 @@ end
 -- end
 
 
+-- this will be loaded for every rosVehicle vehicle before starting the game
 function RosVehicle:onLoad()
     -- rosVehicle namespace
     self.spec_rosVehicle = self["spec_" .. g_modROSModName .. ".rosVehicle"]
@@ -80,7 +82,6 @@ function RosVehicle:pubOdom(ros_time, tf_msg)
 
     local spec = self.spec_rosVehicle
     local vehicle_base_link = spec.base_link_frame
-
 
     -- retrieve the vehicle node we're interested in:
     -- A drivable vehicle is often composed of 2 components and the first component is the main part.
