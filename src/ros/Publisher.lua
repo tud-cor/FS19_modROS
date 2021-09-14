@@ -55,7 +55,7 @@ function Publisher:delete()
     -- nothing to do. Connection object is not owned by this Publisher
 end
 
-function Publisher:publish(msg, topic_name)
+function Publisher:publish(msg)
     if msg.ROS_MSG_NAME ~= self._message_type_name then
         return nil, ("Can't publish '%s' with publisher of type '%s'"):format(msg.ROS_MSG_NAME, self._message_type_name)
     end
@@ -67,7 +67,7 @@ function Publisher:publish(msg, topic_name)
     -- "topic_name" could be with or without namespace
     -- with e.g. "<ros_veh_name_with_id>/odom"
     -- wihtout e.g. "clock"
-    local ret, err = self._conx:write(topic_name .. "\n" .. msg.ROS_MSG_NAME .. "\n" .. msg:to_json())
+    local ret, err = self._conx:write(self._topic_name .. "\n" .. msg.ROS_MSG_NAME .. "\n" .. msg:to_json())
     if not ret then
         return nil, "Error publishing message: '" .. err .. "'"
     end
