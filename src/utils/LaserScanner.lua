@@ -102,7 +102,7 @@ function LaserScanner:raycastCallback(transformId, _, _, _, distance, _, _, _)
 end
 
 
-function LaserScanner:doScan(ros_time, tf_msg, pub_scan)
+function LaserScanner:doScan(ros_time, tf_msg)
     local spec = self.vehicle.spec_rosVehicle
 
     for i = 0, spec.laser_scan_obj.vehicle_table.laser_scan.num_layers-1 do

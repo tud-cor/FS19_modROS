@@ -76,7 +76,7 @@ function RosVehicle:onLoad()
 end
 
 
-function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
+function RosVehicle:pubOdom(ros_time, tf_msg)
 
     local spec = self.spec_rosVehicle
     local vehicle_base_link = spec.base_link_frame
@@ -153,12 +153,12 @@ function RosVehicle:addTF(tf_msg, TransformStamped)
 end
 
 
-function RosVehicle:pubLaserScan(ros_time, tf_msg, pub_scan)
+function RosVehicle:pubLaserScan(ros_time, tf_msg)
 
     local spec = self.spec_rosVehicle
     -- make sure the vechile is drivable and has laser frame node
     if self:getLaserFrameNode() then
-        spec.laser_scan_obj:doScan(ros_time, tf_msg, pub_scan)
+        spec.laser_scan_obj:doScan(ros_time, tf_msg)
     end
 end
 
@@ -208,7 +208,7 @@ function RosVehicle:getLaserFrameNode()
 end
 
 
-function RosVehicle:pubImu(ros_time, pub_imu)
+function RosVehicle:pubImu(ros_time)
 
     local spec = self.spec_rosVehicle
     -- retrieve the vehicle node we're interested in

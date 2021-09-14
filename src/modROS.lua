@@ -149,7 +149,9 @@ function ModROS:publish_veh_odom_func()
     local ros_time = ros.Time.now()
     for _, vehicle in pairs(g_currentMission.vehicles) do
         -- only if the vehicle is spec_rosVehicle, the pubOdom() can be called
-        vehicle:pubOdom(ros_time, self.tf_msg, self._pub_odom)
+        if vehicle.spec_rosVehicle then
+            vehicle:pubOdom(ros_time, self.tf_msg)
+        end
     end
 end
 
@@ -161,7 +163,9 @@ function ModROS:publish_laser_scan_func()
     local ros_time = ros.Time.now()
     for _, vehicle in pairs(g_currentMission.vehicles) do
         -- only if the vehicle is spec_rosVehicle, the pubLaserScan() can be called
-        vehicle:pubLaserScan(ros_time, self.tf_msg, self._pub_scan)
+        if vehicle.spec_rosVehicle then
+            vehicle:pubLaserScan(ros_time, self.tf_msg)
+        end
     end
 end
 
