@@ -56,9 +56,9 @@ function RosVehicle:onLoad()
     local spec = self.spec_rosVehicle
     -- rosVehicle variables
     -- .id is initialized by FS
-    spec.ros_veh_name_w_id = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
+    spec.ros_veh_name_with_id = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
     spec.ros_veh_name = ros.Names.sanatize(self:getFullName())
-    spec.base_link_frame = spec.ros_veh_name_w_id .. "/base_link"
+    spec.base_link_frame = spec.ros_veh_name_with_id .. "/base_link"
     spec.l_v_x_0 = 0
     spec.l_v_y_0 = 0
     spec.l_v_z_0 = 0
