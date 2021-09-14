@@ -111,7 +111,7 @@ function ModROS:update(dt)
             self:publish_veh_odom_func()
             self:publish_laser_scan_func()
             self:publish_imu_func()
-            self._pub_tf:publish(self.tf_msg)
+            self._pub_tf:publish(self.tf_msg, "tf")
 
         end
     end
@@ -134,7 +134,7 @@ end
 function ModROS:publish_sim_time_func()
     local msg = rosgraph_msgs_Clock.new()
     msg.clock = ros.Time.now()
-    self._pub_clock:publish(msg)
+    self._pub_clock:publish(msg, "clock")
 end
 
 
