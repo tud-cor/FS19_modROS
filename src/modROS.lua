@@ -108,8 +108,7 @@ function ModROS:update(dt)
 
     if self.doPubMsg then
         -- avoid writing to the pipe if it isn't actually open
-        -- avoid publishing data if one is not inside a vehicle
-        if self._conx:is_connected() and g_currentMission.controlledVehicle ~= nil then
+        if self._conx:is_connected() then
             self:publish_sim_time_func()
             self:publish_veh_odom_func()
             self:publish_laser_scan_func()
