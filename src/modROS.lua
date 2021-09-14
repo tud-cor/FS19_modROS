@@ -80,12 +80,9 @@ function ModROS:loadMap()
     self.path = ModROS.MOD_DIR .. "ROS_messages"
     self._conx = WriteOnlyFileConnection.new(self.path)
 
-    -- initialise publishers
+    -- initialise no-namespace-specific publishers
     self._pub_tf = Publisher.new(self._conx, "tf", tf2_msgs_TFMessage)
     self._pub_clock = Publisher.new(self._conx, "clock", rosgraph_msgs_Clock)
-    self._pub_odom = Publisher.new(self._conx, "odom", nav_msgs_Odometry)
-    self._pub_scan = Publisher.new(self._conx, "scan", sensor_msgs_LaserScan)
-    self._pub_imu = Publisher.new(self._conx, "imu", sensor_msgs_Imu)
 
     print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
 end
