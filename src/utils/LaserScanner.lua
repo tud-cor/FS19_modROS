@@ -64,7 +64,9 @@ function LaserScanner:getLaserData(laser_scan_array, x, y, z, dx_r, dy, dz_r)
     -- if laser_scan.ignore_terrain is set true then ignore the terrain when detected
 
     if self.vehicle_table.laser_scan.ignore_terrain then
-        -- some vehicles do not have a 2nd component
+        -- this is a temporary method to filter out laser hits on the vehicle itself
+        -- in FS, there are many vehicles composed of 2 components: the first component is the main part and the second component is mostly the axis object(s).
+        -- however, some driveable vehicles do not have a 2nd component (e.g. diesel_locomotive). We need to exclude the condition of hitting 2nd component, if there exists no 2nd compoenent
         if not self.vehicle.components[2] then
             if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode and self.raycastTransformId ~= self.vehicle.components[1].node then
                 table.insert(laser_scan_array, self.raycastDistance)

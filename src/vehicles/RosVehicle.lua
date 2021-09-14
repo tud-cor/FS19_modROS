@@ -78,7 +78,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
 
 
     -- retrieve the vehicle node we're interested in:
-    -- A drivable vehicle is always composed of 2 components and the first component is always the main part.
+    -- A drivable vehicle is often composed of 2 components and the first component is the main part.
     -- The second component is mostly the axis object. Hence we take component1 as our vehicle
     -- The components can be checked/viewed in each vehicle's 3D model.
     local veh_node = self.components[1].node
