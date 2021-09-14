@@ -90,8 +90,14 @@ end
 function ModROS.installSpecializations(vehicleTypeManager, specializationManager, modDirectory, modName)
     specializationManager:addSpecialization("rosVehicle", "RosVehicle", Utils.getFilename("src/vehicles/RosVehicle.lua", modDirectory), nil) -- Nil is important here
 
-    for typeName, _ in pairs(vehicleTypeManager:getVehicleTypes()) do
-        vehicleTypeManager:addSpecialization(typeName, modName .. ".rosVehicle")
+    for typeName, typeEntry in pairs(vehicleTypeManager:getVehicleTypes()) do
+        -- only if the prerequisites of specialization are fulfilled, specializations <rosVehicle> will be installed
+        -- in RosVehicle.lua, spec <drivable> is set as one of prerequisites for now
+        -- hence, if there exists no this condition, an error will occur: Not all prerequisites of specialization modROS.rosVehicle are fulfilled
+
+        if SpecializationUtil.hasSpecialization(Drivable, typeEntry.specializations) then
+            vehicleTypeManager:addSpecialization(typeName, modName .. ".rosVehicle")
+        end
     end
 
 end
