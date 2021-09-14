@@ -166,10 +166,10 @@ function RosVehicle:getLaserFrameNode()
         -- note: a laser scanner is always mounted in the default settings
         if not mod_config.vehicle[spec.ros_veh_name] then
             spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle["default_vehicle"])
-        -- if the custom laser scanner is mounted (parameter is_mounted = true), initialize an object of LaserScanner class
-        elseif mod_config.vehicle[spec.ros_veh_name].laser_scan.is_mounted then
+        -- if the custom laser scanner is mounted (parameter enabled = true), initialize an object of LaserScanner class
+        elseif mod_config.vehicle[spec.ros_veh_name].laser_scan.enabled then
             spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[spec.ros_veh_name])
-        -- if the custom laser scanner is not mounted (parameter is_mounted = false), do not initialize an object of LaserScanner class
+        -- if the custom laser scanner is not mounted (parameter enabled = false), do not initialize an object of LaserScanner class
         else
             return
         end
