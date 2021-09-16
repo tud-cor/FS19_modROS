@@ -32,7 +32,6 @@ end
 
 function RosVehicle.registerFunctions(vehicleType)
     SpecializationUtil.registerFunction(vehicleType, "addTF", RosVehicle.addTF)
-    SpecializationUtil.registerFunction(vehicleType, "getLaserFrameNode", RosVehicle.getLaserFrameNode)
     SpecializationUtil.registerFunction(vehicleType, "pubImu", RosVehicle.pubImu)
     SpecializationUtil.registerFunction(vehicleType, "pubLaserScan", RosVehicle.pubLaserScan)
     SpecializationUtil.registerFunction(vehicleType, "pubOdom", RosVehicle.pubOdom)
@@ -194,25 +193,19 @@ end
 function RosVehicle:pubLaserScan(ros_time, tf_msg)
 
     local spec = self.spec_rosVehicle
-    -- make sure the vechile is drivable and has laser frame node
-    if self:getLaserFrameNode() then
-        spec.laser_scan_obj:doScan(ros_time, tf_msg)
-    end
-end
 
-
-function RosVehicle:getLaserFrameNode()
-    local spec = self.spec_rosVehicle
-
-    if self.spec_drivable then
+    -- only if the object of LaserScanner class was initialized in onload(), publish the LaserScan message
+    -- otherwise return
+    if spec.laser_scan_obj then
+        -- create laser_frame_1 attached to raycastNode (x left, y up, z into the page)
         -- and apply a transform to the self.laser_frame_1
         local tran_x, tran_y, tran_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.z
         local rot_x, rot_y, rot_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.z
         local laser_frame_1 = frames.create_attached_node(spec.instance_veh.cameraNode, self:getFullName(), tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
         spec.LaserFrameNode = laser_frame_1
-        return spec.LaserFrameNode
+        spec.laser_scan_obj:doScan(ros_time, tf_msg)
     else
-        return nil
+        return
     end
 end
 
