@@ -124,64 +124,72 @@ function RosVehicle:pubOdom(ros_time, tf_msg)
     -- A drivable vehicle is often composed of 2 components and the first component is the main part.
     -- The second component is mostly the axis object. Hence we take component1 as our vehicle
     -- The components can be checked/viewed in each vehicle's 3D model.
-    local veh_node = self.components[1].node
 
-    -- retrieve global (ie: world) coordinates of this node
-    local p_x, p_y, p_z = getWorldTranslation(veh_node)
-
-    -- retrieve global (ie: world) quaternion of this node
-    local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
-
-    -- get twist data
-    local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
-    -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
-
-
-    -- convert y up world to z up world (farmsim coordinate system: x right, z towards me, y up; ROS: y right, x towards me, z up)
-    -- https://stackoverflow.com/questions/16099979/can-i-switch-x-y-z-in-a-quaternion
-    -- https://gamedev.stackexchange.com/questions/129204/switch-axes-and-handedness-of-a-quaternion
-    -- https://stackoverflow.com/questions/18818102/convert-quaternion-representing-rotation-from-one-coordinate-system-to-another
-
-
-    -- create nav_msgs/Odometry instance
-    local odom_msg = nav_msgs_Odometry.new()
-
-    -- populate fields (not using Odometry:set(..) here as this is much
-    -- more readable than a long list of anonymous args)
-    odom_msg.header.frame_id = "odom"
-    odom_msg.header.stamp = ros_time
-    odom_msg.child_frame_id = vehicle_base_link
-    -- note the order of the axes here (see earlier comment about FS chirality)
-    odom_msg.pose.pose.position.x = p_z
-    odom_msg.pose.pose.position.y = p_x
-    odom_msg.pose.pose.position.z = p_y
-    -- note again the order of the axes
-    odom_msg.pose.pose.orientation.x = q_z
-    odom_msg.pose.pose.orientation.y = q_x
-    odom_msg.pose.pose.orientation.z = q_y
-    odom_msg.pose.pose.orientation.w = q_w
-    -- since the train returns nil when passed to getLocalLinearVelocity, set 0 to prevent an error
-    if l_v_x == nil then
-        odom_msg.twist.twist.linear.x = 0
-        odom_msg.twist.twist.linear.y = 0
-        odom_msg.twist.twist.linear.z = 0
+    -- if a vehicle somehow does not have self.components[1].node
+    -- stop publishing odometry and return
+    if not self.components[1].node then
+        print(spec.ros_veh_name .. " does not havve components[1].node")
+        print("Can not publish odom so return")
+        return
     else
-    -- note again the order of the axes
-        odom_msg.twist.twist.linear.x = l_v_z
-        odom_msg.twist.twist.linear.y = l_v_x
-        odom_msg.twist.twist.linear.z = l_v_y
+        local veh_node = self.components[1].node
+
+        -- retrieve global (ie: world) coordinates of this node
+        local p_x, p_y, p_z = getWorldTranslation(veh_node)
+
+        -- retrieve global (ie: world) quaternion of this node
+        local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
+
+        -- get twist data
+        local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
+        -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
+
+
+        -- convert y up world to z up world (farmsim coordinate system: x right, z towards me, y up; ROS: y right, x towards me, z up)
+        -- https://stackoverflow.com/questions/16099979/can-i-switch-x-y-z-in-a-quaternion
+        -- https://gamedev.stackexchange.com/questions/129204/switch-axes-and-handedness-of-a-quaternion
+        -- https://stackoverflow.com/questions/18818102/convert-quaternion-representing-rotation-from-one-coordinate-system-to-another
+
+
+        -- create nav_msgs/Odometry instance
+        local odom_msg = nav_msgs_Odometry.new()
+
+        -- populate fields (not using Odometry:set(..) here as this is much
+        -- more readable than a long list of anonymous args)
+        odom_msg.header.frame_id = "odom"
+        odom_msg.header.stamp = ros_time
+        odom_msg.child_frame_id = vehicle_base_link
+        -- note the order of the axes here (see earlier comment about FS chirality)
+        odom_msg.pose.pose.position.x = p_z
+        odom_msg.pose.pose.position.y = p_x
+        odom_msg.pose.pose.position.z = p_y
+        -- note again the order of the axes
+        odom_msg.pose.pose.orientation.x = q_z
+        odom_msg.pose.pose.orientation.y = q_x
+        odom_msg.pose.pose.orientation.z = q_y
+        odom_msg.pose.pose.orientation.w = q_w
+        -- since the train returns nil when passed to getLocalLinearVelocity, set 0 to prevent an error
+        if l_v_x == nil then
+            odom_msg.twist.twist.linear.x = 0
+            odom_msg.twist.twist.linear.y = 0
+            odom_msg.twist.twist.linear.z = 0
+        else
+        -- note again the order of the axes
+            odom_msg.twist.twist.linear.x = l_v_z
+            odom_msg.twist.twist.linear.y = l_v_x
+            odom_msg.twist.twist.linear.z = l_v_y
+        end
+        -- TODO get AngularVelocity wrt local vehicle frame
+        -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
+        -- publish the message
+        spec.pub_odom:publish(odom_msg)
+
+        -- get tf from odom to vehicles
+        local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
+        tf_odom_vehicle_link:set("odom", ros_time, vehicle_base_link, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
+        -- update the transforms_array
+        self:addTF(tf_msg, tf_odom_vehicle_link)
     end
-    -- TODO get AngularVelocity wrt local vehicle frame
-    -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
-    -- publish the message
-    spec.pub_odom:publish(odom_msg)
-
-    -- get tf from odom to vehicles
-    local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
-    tf_odom_vehicle_link:set("odom", ros_time, vehicle_base_link, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
-    -- update the transforms_array
-    self:addTF(tf_msg, tf_odom_vehicle_link)
-
 end
 
 
