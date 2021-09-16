@@ -211,6 +211,16 @@ end
 function RosVehicle:pubImu(ros_time)
 
     local spec = self.spec_rosVehicle
+    -- if there are no custom settings for this vehicle, use the default settings
+    if not mod_config.vehicle[spec.ros_veh_name] then
+        spec.imu = mod_config.vehicle["default_vehicle"].imu.enabled
+    else
+        spec.imu = mod_config.vehicle[spec.ros_veh_name].imu.enabled
+    end
+
+    -- if imu of this vehicle is disabled, return
+    if not spec.imu then return end
+
     -- retrieve the vehicle node we're interested in
     local veh_node = self.components[1].node
 

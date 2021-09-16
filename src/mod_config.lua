@@ -56,6 +56,9 @@ mod_config =
       -- TODO: describe what the "default mask" is exactly (which classes of objects are included / have their bit set to 1).
       raycast = {
         collision_mask = nil
+      },
+      imu = {
+        enabled = true
       }
     },
     diesel_locomotive = {
@@ -91,6 +94,9 @@ mod_config =
       -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
       raycast = {
         collision_mask = nil
+      },
+      imu = {
+        enabled = false
       }
     },
     fiat_1300dt = {
@@ -126,6 +132,9 @@ mod_config =
       -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
       raycast = {
         collision_mask = nil
+      },
+      imu = {
+        enabled = true
       }
     },
     new_holland_tx_32 = {
@@ -161,6 +170,9 @@ mod_config =
       -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
       raycast = {
         collision_mask = nil
+      },
+      imu = {
+        enabled = true
       }
     },
     default_vehicle = {
@@ -196,6 +208,9 @@ mod_config =
       -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
       raycast = {
         collision_mask = nil
+      },
+      imu = {
+        enabled = true
       }
     },
   }
