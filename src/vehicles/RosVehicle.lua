@@ -85,10 +85,29 @@ function RosVehicle:onLoad()
         spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[spec.ros_veh_name])
 
     end
-    -- store the individual vehicle config file in the specialization to avoid reloading in the loop
-    spec.instance_veh = VehicleCamera:new(self, RosVehicle)
-    spec.xml_path = spec.instance_veh.vehicle.configFileName
-    spec.xmlFile = loadXMLFile("vehicle", spec.xml_path)
+
+    --  only if the object of LaserScanner class was initialized (the laser scanner is enabled), initialize camera settings
+    if spec.laser_scan_obj then
+        -- store the individual vehicle config file in the specialization to avoid reloading in the loop
+        spec.instance_veh = VehicleCamera:new(self, RosVehicle)
+        spec.xml_path = spec.instance_veh.vehicle.configFileName
+        spec.xmlFile = loadXMLFile("vehicle", spec.xml_path)
+        --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
+        --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)
+        local cameraKey = string.format("vehicle.enterable.cameras.camera(%d).%s", 0, spec.laser_scan_obj.vehicle_table.laser_scan.laser_attachments)
+        XMLUtil.checkDeprecatedXMLElements(spec.xmlFile, spec.xml_path, cameraKey .. "#index", "#node") -- FS17 to FS19
+        local camIndexStr = getXMLString(spec.xmlFile, cameraKey .. "#node")
+        spec.instance_veh.cameraNode =
+            I3DUtil.indexToObject(
+            spec.instance_veh.vehicle.components,
+            camIndexStr,
+            spec.instance_veh.vehicle.i3dMappings
+        )
+        if spec.instance_veh.cameraNode == nil then
+            print("nil camera")
+
+        end
+    end
 
     -- initialize publishers for Odometry, LaserScan and Imu messages for each rosVehicle
     spec.pub_odom = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/odom", nav_msgs_Odometry)
@@ -186,23 +205,6 @@ function RosVehicle:getLaserFrameNode()
     local spec = self.spec_rosVehicle
 
     if self.spec_drivable then
-        --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
-        --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)
-        local cameraKey = string.format("vehicle.enterable.cameras.camera(%d).%s", 0, spec.laser_scan_obj.vehicle_table.laser_scan.laser_attachments)
-        XMLUtil.checkDeprecatedXMLElements(spec.xmlFile, spec.xml_path, cameraKey .. "#index", "#node") -- FS17 to FS19
-        local camIndexStr = getXMLString(spec.xmlFile, cameraKey .. "#node")
-        spec.instance_veh.cameraNode =
-            I3DUtil.indexToObject(
-            spec.instance_veh.vehicle.components,
-            camIndexStr,
-            spec.instance_veh.vehicle.i3dMappings
-        )
-        if spec.instance_veh.cameraNode == nil then
-            print("nil camera")
-        -- else
-        --     print(instance_veh.cameraNode)
-        end
-        -- create self.laser_frame_1 attached to raycastNode (x left, y up, z into the page)
         -- and apply a transform to the self.laser_frame_1
         local tran_x, tran_y, tran_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.z
         local rot_x, rot_y, rot_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.z
