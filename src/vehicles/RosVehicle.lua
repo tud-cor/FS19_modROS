@@ -135,7 +135,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg)
     -- if a vehicle somehow does not have self.components[1].node
     -- stop publishing odometry and return
     if not self.components[1].node then
-        print(spec.ros_veh_name .. " does not havve components[1].node")
+        print(spec.ros_veh_name .. " does not have components[1].node")
         print("Can not publish odom so return")
         return
     else
