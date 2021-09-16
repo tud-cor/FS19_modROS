@@ -172,14 +172,11 @@ end
 -- A.4. imu publisher
 -- a function to publish get the position and orientaion of unmanned or manned vehicle(s) get and write to the named pipe (symbolic link)
 function ModROS:publish_imu_func()
-    if mod_config.control_only_active_one then
-        local vehicle = g_currentMission.controlledVehicle
-        local ros_time = ros.Time.now()
-        vehicle:pubImu(ros_time, self._pub_imu)
-    else
-        for _, vehicle in pairs(g_currentMission.vehicles) do
-            local ros_time = ros.Time.now()
-            vehicle:pubImu(ros_time, self._pub_imu)
+
+    local ros_time = ros.Time.now()
+    for _, vehicle in pairs(g_currentMission.vehicles) do
+        if vehicle.spec_rosVehicle then
+            vehicle:pubImu(ros_time)
         end
     end
 end
