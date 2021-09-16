@@ -42,6 +42,9 @@ function Publisher.new(connection, topic_name, message_type)
 
     -- this is not really used in the current implementation. We rely on the "Python side"
     -- to handle actual publishing for us, and they have hard-coded topic names (for now)
+    -- "topic_name" could be with or without namespace
+    -- with e.g. "<ros_veh_name_with_id>/odom"
+    -- wihtout e.g. "clock"
     self._topic_name = topic_name
 
     -- we need this to be able to tell the Python side what sort of message
@@ -64,9 +67,6 @@ function Publisher:publish(msg)
     end
 
     -- try writing the serialised message to the connection
-    -- "topic_name" could be with or without namespace
-    -- with e.g. "<ros_veh_name_with_id>/odom"
-    -- wihtout e.g. "clock"
     local ret, err = self._conx:write(self._topic_name .. "\n" .. msg.ROS_MSG_NAME .. "\n" .. msg:to_json())
     if not ret then
         return nil, "Error publishing message: '" .. err .. "'"
