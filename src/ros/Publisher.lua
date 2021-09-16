@@ -40,8 +40,6 @@ function Publisher.new(connection, topic_name, message_type)
     -- the Publisher object
     self._conx = connection
 
-    -- this is not really used in the current implementation. We rely on the "Python side"
-    -- to handle actual publishing for us, and they have hard-coded topic names (for now)
     -- "topic_name" could be with or without namespace
     -- with e.g. "<ros_veh_name_with_id>/odom"
     -- wihtout e.g. "clock"
