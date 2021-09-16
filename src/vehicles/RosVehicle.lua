@@ -74,6 +74,17 @@ function RosVehicle:onLoad()
     spec.l_v_z_0 = 0
     spec.sec = 0
 
+    -- laser scanner initialization
+
+    -- if there is no custom laser scanner setting for this vehicle, use the default settings to initialize an object of LaserScanner class
+    -- note: a laser scanner is always mounted in the default settings
+    if not mod_config.vehicle[spec.ros_veh_name] then
+        spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle["default_vehicle"])
+    -- if the custom laser scanner is mounted (parameter enabled = true), initialize an object of LaserScanner class
+    elseif mod_config.vehicle[spec.ros_veh_name].laser_scan.enabled then
+        spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[spec.ros_veh_name])
+
+    end
     -- store the individual vehicle config file in the specialization to avoid reloading in the loop
     spec.instance_veh = VehicleCamera:new(self, RosVehicle)
     spec.xml_path = spec.instance_veh.vehicle.configFileName
@@ -175,18 +186,6 @@ function RosVehicle:getLaserFrameNode()
     local spec = self.spec_rosVehicle
 
     if self.spec_drivable then
-
-        -- if there is no custom laser scanner setting for this vehicle, use the default settings to initialize an object of LaserScanner class
-        -- note: a laser scanner is always mounted in the default settings
-        if not mod_config.vehicle[spec.ros_veh_name] then
-            spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle["default_vehicle"])
-        -- if the custom laser scanner is mounted (parameter enabled = true), initialize an object of LaserScanner class
-        elseif mod_config.vehicle[spec.ros_veh_name].laser_scan.enabled then
-            spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[spec.ros_veh_name])
-        -- if the custom laser scanner is not mounted (parameter enabled = false), do not initialize an object of LaserScanner class
-        else
-            return
-        end
         --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
         --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)
         local cameraKey = string.format("vehicle.enterable.cameras.camera(%d).%s", 0, spec.laser_scan_obj.vehicle_table.laser_scan.laser_attachments)
