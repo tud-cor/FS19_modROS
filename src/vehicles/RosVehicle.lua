@@ -57,6 +57,12 @@ function RosVehicle:onLoad()
     self.spec_rosVehicle = self["spec_" .. g_modROSModName .. ".rosVehicle"]
     local spec = self.spec_rosVehicle
     -- rosVehicle variables
+
+    -- there are two veh_name variables, one is with an id number and the other is without
+    -- because there could be situations where the same vehicle model is spawned more than once in the FS world
+    -- Hence, to create unique topic names for each vehicle, the name with id is necessary
+
+    -- variables without id are used as keys to retrieve config settings/tables
     -- .id is initialized by FS
     spec.ros_veh_name_with_id = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
     spec.ros_veh_name = ros.Names.sanatize(self:getFullName())
