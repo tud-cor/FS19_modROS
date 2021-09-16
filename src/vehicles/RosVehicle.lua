@@ -67,6 +67,8 @@ function RosVehicle:onLoad()
     spec.ros_veh_name_with_id = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
     spec.ros_veh_name = ros.Names.sanatize(self:getFullName())
     spec.base_link_frame = spec.ros_veh_name_with_id .. "/base_link"
+
+    -- initialize linear velocity and time(s) for Imu messages
     spec.l_v_x_0 = 0
     spec.l_v_y_0 = 0
     spec.l_v_z_0 = 0
@@ -251,7 +253,7 @@ function RosVehicle:pubImu(ros_time)
     local acc_x = (l_v_x - spec.l_v_x_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
     local acc_y = (l_v_y - spec.l_v_y_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
     local acc_z = (l_v_z - spec.l_v_z_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
-    -- update the velocity and time
+    -- update the linear velocity and time
     spec.l_v_x_0 = l_v_x
     spec.l_v_y_0 = l_v_y
     spec.l_v_z_0 = l_v_z
