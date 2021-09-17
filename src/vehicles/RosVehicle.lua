@@ -68,8 +68,8 @@ function RosVehicle:onLoad()
     spec.base_link_frame = spec.ros_veh_name_with_id .. "/base_link"
     spec.component_1_node = self.components[1].node
     if not spec.component_1_node then
-        print(spec.ros_veh_name .. " does not have components[1].node")
-        print("Can not publish odom, scan and imu messages for " ..  spec.ros_veh_name .. "so return")
+        print(spec.ros_veh_name_with_id .. " does not have components[1].node")
+        print("Can not publish odom, scan and imu messages for " ..  spec.ros_veh_name_with_id)
     end
     -- Laser scanner initialization
 
@@ -80,7 +80,6 @@ function RosVehicle:onLoad()
     -- if the custom laser scanner is mounted (parameter enabled = true), initialize an object of LaserScanner class
     elseif mod_config.vehicle[spec.ros_veh_name].laser_scan.enabled then
         spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[spec.ros_veh_name])
-
     end
 
     --  only if the object of LaserScanner class was initialized (the laser scanner is enabled), initialize camera settings
@@ -101,7 +100,7 @@ function RosVehicle:onLoad()
             spec.instance_veh.vehicle.i3dMappings
         )
         if spec.instance_veh.cameraNode == nil then
-            print(spec.ros_veh_name .. " does not have cameraNode")
+            print(spec.ros_veh_name_with_id .. " does not have cameraNode")
             print("Can not publish laser scan messages for " .. spec.ros_veh_name)
         end
         -- create laser_frame_1 attached to raycastNode (x left, y up, z into the page)
