@@ -144,67 +144,66 @@ function RosVehicle:pubOdom(ros_time, tf_msg)
 
     -- if a vehicle somehow does not have self.components[1].node
     -- stop publishing odometry and return
-    if not spec.component_1_node then
-        return
+    if not spec.component_1_node then return end
+
+    local veh_node = spec.component_1_node
+
+    -- retrieve global (ie: world) coordinates of this node
+    local p_x, p_y, p_z = getWorldTranslation(veh_node)
+
+    -- retrieve global (ie: world) quaternion of this node
+    local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
+
+    -- get twist data
+    local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
+    -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
+
+
+    -- convert y up world to z up world (farmsim coordinate system: x right, z towards me, y up; ROS: y right, x towards me, z up)
+    -- https://stackoverflow.com/questions/16099979/can-i-switch-x-y-z-in-a-quaternion
+    -- https://gamedev.stackexchange.com/questions/129204/switch-axes-and-handedness-of-a-quaternion
+    -- https://stackoverflow.com/questions/18818102/convert-quaternion-representing-rotation-from-one-coordinate-system-to-another
+
+
+    -- create nav_msgs/Odometry instance
+    local odom_msg = nav_msgs_Odometry.new()
+
+    -- populate fields (not using Odometry:set(..) here as this is much
+    -- more readable than a long list of anonymous args)
+    odom_msg.header.frame_id = "odom"
+    odom_msg.header.stamp = ros_time
+    odom_msg.child_frame_id = vehicle_base_link
+    -- note the order of the axes here (see earlier comment about FS chirality)
+    odom_msg.pose.pose.position.x = p_z
+    odom_msg.pose.pose.position.y = p_x
+    odom_msg.pose.pose.position.z = p_y
+    -- note again the order of the axes
+    odom_msg.pose.pose.orientation.x = q_z
+    odom_msg.pose.pose.orientation.y = q_x
+    odom_msg.pose.pose.orientation.z = q_y
+    odom_msg.pose.pose.orientation.w = q_w
+    -- since the train returns nil when passed to getLocalLinearVelocity, set 0 to prevent an error
+    if l_v_x == nil then
+        odom_msg.twist.twist.linear.x = 0
+        odom_msg.twist.twist.linear.y = 0
+        odom_msg.twist.twist.linear.z = 0
     else
-        local veh_node = spec.component_1_node
-
-        -- retrieve global (ie: world) coordinates of this node
-        local p_x, p_y, p_z = getWorldTranslation(veh_node)
-
-        -- retrieve global (ie: world) quaternion of this node
-        local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
-
-        -- get twist data
-        local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
-        -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
-
-
-        -- convert y up world to z up world (farmsim coordinate system: x right, z towards me, y up; ROS: y right, x towards me, z up)
-        -- https://stackoverflow.com/questions/16099979/can-i-switch-x-y-z-in-a-quaternion
-        -- https://gamedev.stackexchange.com/questions/129204/switch-axes-and-handedness-of-a-quaternion
-        -- https://stackoverflow.com/questions/18818102/convert-quaternion-representing-rotation-from-one-coordinate-system-to-another
-
-
-        -- create nav_msgs/Odometry instance
-        local odom_msg = nav_msgs_Odometry.new()
-
-        -- populate fields (not using Odometry:set(..) here as this is much
-        -- more readable than a long list of anonymous args)
-        odom_msg.header.frame_id = "odom"
-        odom_msg.header.stamp = ros_time
-        odom_msg.child_frame_id = vehicle_base_link
-        -- note the order of the axes here (see earlier comment about FS chirality)
-        odom_msg.pose.pose.position.x = p_z
-        odom_msg.pose.pose.position.y = p_x
-        odom_msg.pose.pose.position.z = p_y
-        -- note again the order of the axes
-        odom_msg.pose.pose.orientation.x = q_z
-        odom_msg.pose.pose.orientation.y = q_x
-        odom_msg.pose.pose.orientation.z = q_y
-        odom_msg.pose.pose.orientation.w = q_w
-        -- since the train returns nil when passed to getLocalLinearVelocity, set 0 to prevent an error
-        if l_v_x == nil then
-            odom_msg.twist.twist.linear.x = 0
-            odom_msg.twist.twist.linear.y = 0
-            odom_msg.twist.twist.linear.z = 0
-        else
-        -- note again the order of the axes
-            odom_msg.twist.twist.linear.x = l_v_z
-            odom_msg.twist.twist.linear.y = l_v_x
-            odom_msg.twist.twist.linear.z = l_v_y
-        end
-        -- TODO get AngularVelocity wrt local vehicle frame
-        -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
-        -- publish the message
-        spec.pub_odom:publish(odom_msg)
-
-        -- get tf from odom to vehicles
-        local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
-        tf_odom_vehicle_link:set("odom", ros_time, vehicle_base_link, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
-        -- update the transforms_array
-        self:addTF(tf_msg, tf_odom_vehicle_link)
+    -- note again the order of the axes
+        odom_msg.twist.twist.linear.x = l_v_z
+        odom_msg.twist.twist.linear.y = l_v_x
+        odom_msg.twist.twist.linear.z = l_v_y
     end
+    -- TODO get AngularVelocity wrt local vehicle frame
+    -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
+    -- publish the message
+    spec.pub_odom:publish(odom_msg)
+
+    -- get tf from odom to vehicles
+    local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
+    tf_odom_vehicle_link:set("odom", ros_time, vehicle_base_link, p_z, p_x, p_y, q_z, q_x, q_y, q_w)
+    -- update the transforms_array
+    self:addTF(tf_msg, tf_odom_vehicle_link)
+
 end
 
 
@@ -235,70 +234,69 @@ function RosVehicle:pubImu(ros_time)
 
     -- if a vehicle somehow does not have self.components[1].node
     -- stop publishing imu and return
-    if not spec.component_1_node then
-        return
+    if not spec.component_1_node then return end
+
+    -- if there are no custom settings for this vehicle, use the default settings
+    if not mod_config.vehicle[spec.ros_veh_name] then
+        spec.imu = mod_config.vehicle["default_vehicle"].imu.enabled
     else
-        -- if there are no custom settings for this vehicle, use the default settings
-        if not mod_config.vehicle[spec.ros_veh_name] then
-            spec.imu = mod_config.vehicle["default_vehicle"].imu.enabled
-        else
-            spec.imu = mod_config.vehicle[spec.ros_veh_name].imu.enabled
-        end
-
-        -- if imu of this vehicle is disabled, return
-        if not spec.imu then return end
-
-        -- retrieve the vehicle node we're interested in
-        local veh_node = spec.component_1_node
-
-        -- retrieve global (ie: world) coordinates of this node
-        local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
-
-        -- get twist data and calculate acc info
-
-        -- check getVelocityAtWorldPos and getVelocityAtLocalPos
-        -- local linear vel: Get velocity at local position of transform object; "getLinearVelocity" is the the velocity wrt world frame
-        -- local l_v_z max is around 8(i guess the unit is m/s here) when reach 30km/hr(shown in speed indicator)
-        local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
-        -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
-
-        -- TODO add condition to filter out the vehicle: train because it does not have velocity info
-        -- for now we'll just use 0.0 as a replacement value
-        if not l_v_x then l_v_x = 0.0 end
-        if not l_v_y then l_v_y = 0.0 end
-        if not l_v_z then l_v_z = 0.0 end
-
-        -- calculation of linear acceleration in x,y,z directions
-        local acc_x = (l_v_x - spec.l_v_x_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
-        local acc_y = (l_v_y - spec.l_v_y_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
-        local acc_z = (l_v_z - spec.l_v_z_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
-        -- update the linear velocity and time
-        spec.l_v_x_0 = l_v_x
-        spec.l_v_y_0 = l_v_y
-        spec.l_v_z_0 = l_v_z
-        spec.sec = g_currentMission.environment.dayTime / 1000
-
-
-        -- create sensor_msgs/Imu instance
-        local imu_msg = sensor_msgs_Imu.new()
-        -- populate fields (not using sensor_msgs_Imu:set(..) here as this is much
-        -- more readable than a long list of anonymous args)
-        imu_msg.header.frame_id = "base_link"
-        imu_msg.header.stamp = ros_time
-        -- note the order of the axes here (see earlier comment about FS chirality)
-        imu_msg.orientation.x = q_z
-        imu_msg.orientation.y = q_x
-        imu_msg.orientation.z = q_y
-        imu_msg.orientation.w = q_w
-        -- TODO get AngularVelocity wrt local vehicle frame
-        -- since the farmsim `getAngularVelocity()` can't get body-local angular velocity, we don't set imu_msg.angular_velocity for now
-
-        -- note again the order of the axes
-        imu_msg.linear_acceleration.x = acc_z
-        imu_msg.linear_acceleration.y = acc_x
-        imu_msg.linear_acceleration.z = acc_y
-
-        -- publish the message
-        spec.pub_imu:publish(imu_msg)
+        spec.imu = mod_config.vehicle[spec.ros_veh_name].imu.enabled
     end
+
+    -- if imu of this vehicle is disabled, return
+    if not spec.imu then return end
+
+    -- retrieve the vehicle node we're interested in
+    local veh_node = spec.component_1_node
+
+    -- retrieve global (ie: world) coordinates of this node
+    local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
+
+    -- get twist data and calculate acc info
+
+    -- check getVelocityAtWorldPos and getVelocityAtLocalPos
+    -- local linear vel: Get velocity at local position of transform object; "getLinearVelocity" is the the velocity wrt world frame
+    -- local l_v_z max is around 8(i guess the unit is m/s here) when reach 30km/hr(shown in speed indicator)
+    local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
+    -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
+
+    -- TODO add condition to filter out the vehicle: train because it does not have velocity info
+    -- for now we'll just use 0.0 as a replacement value
+    if not l_v_x then l_v_x = 0.0 end
+    if not l_v_y then l_v_y = 0.0 end
+    if not l_v_z then l_v_z = 0.0 end
+
+    -- calculation of linear acceleration in x,y,z directions
+    local acc_x = (l_v_x - spec.l_v_x_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+    local acc_y = (l_v_y - spec.l_v_y_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+    local acc_z = (l_v_z - spec.l_v_z_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+    -- update the linear velocity and time
+    spec.l_v_x_0 = l_v_x
+    spec.l_v_y_0 = l_v_y
+    spec.l_v_z_0 = l_v_z
+    spec.sec = g_currentMission.environment.dayTime / 1000
+
+
+    -- create sensor_msgs/Imu instance
+    local imu_msg = sensor_msgs_Imu.new()
+    -- populate fields (not using sensor_msgs_Imu:set(..) here as this is much
+    -- more readable than a long list of anonymous args)
+    imu_msg.header.frame_id = "base_link"
+    imu_msg.header.stamp = ros_time
+    -- note the order of the axes here (see earlier comment about FS chirality)
+    imu_msg.orientation.x = q_z
+    imu_msg.orientation.y = q_x
+    imu_msg.orientation.z = q_y
+    imu_msg.orientation.w = q_w
+    -- TODO get AngularVelocity wrt local vehicle frame
+    -- since the farmsim `getAngularVelocity()` can't get body-local angular velocity, we don't set imu_msg.angular_velocity for now
+
+    -- note again the order of the axes
+    imu_msg.linear_acceleration.x = acc_z
+    imu_msg.linear_acceleration.y = acc_x
+    imu_msg.linear_acceleration.z = acc_y
+
+    -- publish the message
+    spec.pub_imu:publish(imu_msg)
+
 end
