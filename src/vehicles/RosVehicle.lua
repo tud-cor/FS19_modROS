@@ -117,7 +117,12 @@ function RosVehicle:onLoad()
         spec.l_v_y_0 = 0
         spec.l_v_z_0 = 0
         spec.sec = 0
-
+    else
+        print("An object of LaserScanner class for " .. spec.ros_veh_name_with_id .. "was not initialized")
+        print("Can not publish laser scan messages for " .. spec.ros_veh_name_with_id)
+        print("Possible reason:")
+        print(" - there is no laser_scan.enabled configured in mod_config.lua")
+        print(" - laser_scan.enabled is set false")
     end
 
     -- initialize publishers for Odometry, LaserScan and Imu messages for each rosVehicle
