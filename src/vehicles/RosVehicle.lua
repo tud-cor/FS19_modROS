@@ -66,6 +66,11 @@ function RosVehicle:onLoad()
     spec.ros_veh_name_with_id = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
     spec.ros_veh_name = ros.Names.sanatize(self:getFullName())
     spec.base_link_frame = spec.ros_veh_name_with_id .. "/base_link"
+    spec.component_1_node = self.components[1].node
+    if not spec.component_1_node then
+        print(spec.ros_veh_name .. " does not have components[1].node")
+        print("Can not publish odom, scan and imu messages for " ..  spec.ros_veh_name .. "so return")
+    end
 
     -- initialize linear velocity and time(s) for Imu messages
     spec.l_v_x_0 = 0
@@ -134,12 +139,10 @@ function RosVehicle:pubOdom(ros_time, tf_msg)
 
     -- if a vehicle somehow does not have self.components[1].node
     -- stop publishing odometry and return
-    if not self.components[1].node then
-        print(spec.ros_veh_name .. " does not have components[1].node")
-        print("Can not publish odom so return")
+    if not spec.component_1_node then
         return
     else
-        local veh_node = self.components[1].node
+        local veh_node = spec.component_1_node
 
         -- retrieve global (ie: world) coordinates of this node
         local p_x, p_y, p_z = getWorldTranslation(veh_node)
@@ -221,67 +224,73 @@ end
 function RosVehicle:pubImu(ros_time)
 
     local spec = self.spec_rosVehicle
-    -- if there are no custom settings for this vehicle, use the default settings
-    if not mod_config.vehicle[spec.ros_veh_name] then
-        spec.imu = mod_config.vehicle["default_vehicle"].imu.enabled
+
+    -- if a vehicle somehow does not have self.components[1].node
+    -- stop publishing imu and return
+    if not spec.component_1_node then
+        return
     else
-        spec.imu = mod_config.vehicle[spec.ros_veh_name].imu.enabled
+        -- if there are no custom settings for this vehicle, use the default settings
+        if not mod_config.vehicle[spec.ros_veh_name] then
+            spec.imu = mod_config.vehicle["default_vehicle"].imu.enabled
+        else
+            spec.imu = mod_config.vehicle[spec.ros_veh_name].imu.enabled
+        end
+
+        -- if imu of this vehicle is disabled, return
+        if not spec.imu then return end
+
+        -- retrieve the vehicle node we're interested in
+        local veh_node = spec.component_1_node
+
+        -- retrieve global (ie: world) coordinates of this node
+        local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
+
+        -- get twist data and calculate acc info
+
+        -- check getVelocityAtWorldPos and getVelocityAtLocalPos
+        -- local linear vel: Get velocity at local position of transform object; "getLinearVelocity" is the the velocity wrt world frame
+        -- local l_v_z max is around 8(i guess the unit is m/s here) when reach 30km/hr(shown in speed indicator)
+        local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
+        -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
+
+        -- TODO add condition to filter out the vehicle: train because it does not have velocity info
+        -- for now we'll just use 0.0 as a replacement value
+        if not l_v_x then l_v_x = 0.0 end
+        if not l_v_y then l_v_y = 0.0 end
+        if not l_v_z then l_v_z = 0.0 end
+
+        -- calculation of linear acceleration in x,y,z directions
+        local acc_x = (l_v_x - spec.l_v_x_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+        local acc_y = (l_v_y - spec.l_v_y_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+        local acc_z = (l_v_z - spec.l_v_z_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+        -- update the linear velocity and time
+        spec.l_v_x_0 = l_v_x
+        spec.l_v_y_0 = l_v_y
+        spec.l_v_z_0 = l_v_z
+        spec.sec = g_currentMission.environment.dayTime / 1000
+
+
+        -- create sensor_msgs/Imu instance
+        local imu_msg = sensor_msgs_Imu.new()
+        -- populate fields (not using sensor_msgs_Imu:set(..) here as this is much
+        -- more readable than a long list of anonymous args)
+        imu_msg.header.frame_id = "base_link"
+        imu_msg.header.stamp = ros_time
+        -- note the order of the axes here (see earlier comment about FS chirality)
+        imu_msg.orientation.x = q_z
+        imu_msg.orientation.y = q_x
+        imu_msg.orientation.z = q_y
+        imu_msg.orientation.w = q_w
+        -- TODO get AngularVelocity wrt local vehicle frame
+        -- since the farmsim `getAngularVelocity()` can't get body-local angular velocity, we don't set imu_msg.angular_velocity for now
+
+        -- note again the order of the axes
+        imu_msg.linear_acceleration.x = acc_z
+        imu_msg.linear_acceleration.y = acc_x
+        imu_msg.linear_acceleration.z = acc_y
+
+        -- publish the message
+        spec.pub_imu:publish(imu_msg)
     end
-
-    -- if imu of this vehicle is disabled, return
-    if not spec.imu then return end
-
-    -- retrieve the vehicle node we're interested in
-    local veh_node = self.components[1].node
-
-    -- retrieve global (ie: world) coordinates of this node
-    local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
-
-    -- get twist data and calculate acc info
-
-    -- check getVelocityAtWorldPos and getVelocityAtLocalPos
-    -- local linear vel: Get velocity at local position of transform object; "getLinearVelocity" is the the velocity wrt world frame
-    -- local l_v_z max is around 8(i guess the unit is m/s here) when reach 30km/hr(shown in speed indicator)
-    local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
-    -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
-
-    -- TODO add condition to filter out the vehicle: train because it does not have velocity info
-    -- for now we'll just use 0.0 as a replacement value
-    if not l_v_x then l_v_x = 0.0 end
-    if not l_v_y then l_v_y = 0.0 end
-    if not l_v_z then l_v_z = 0.0 end
-
-    -- calculation of linear acceleration in x,y,z directions
-    local acc_x = (l_v_x - spec.l_v_x_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
-    local acc_y = (l_v_y - spec.l_v_y_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
-    local acc_z = (l_v_z - spec.l_v_z_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
-    -- update the linear velocity and time
-    spec.l_v_x_0 = l_v_x
-    spec.l_v_y_0 = l_v_y
-    spec.l_v_z_0 = l_v_z
-    spec.sec = g_currentMission.environment.dayTime / 1000
-
-
-    -- create sensor_msgs/Imu instance
-    local imu_msg = sensor_msgs_Imu.new()
-    -- populate fields (not using sensor_msgs_Imu:set(..) here as this is much
-    -- more readable than a long list of anonymous args)
-    imu_msg.header.frame_id = "base_link"
-    imu_msg.header.stamp = ros_time
-    -- note the order of the axes here (see earlier comment about FS chirality)
-    imu_msg.orientation.x = q_z
-    imu_msg.orientation.y = q_x
-    imu_msg.orientation.z = q_y
-    imu_msg.orientation.w = q_w
-    -- TODO get AngularVelocity wrt local vehicle frame
-    -- since the farmsim `getAngularVelocity()` can't get body-local angular velocity, we don't set imu_msg.angular_velocity for now
-
-    -- note again the order of the axes
-    imu_msg.linear_acceleration.x = acc_z
-    imu_msg.linear_acceleration.y = acc_x
-    imu_msg.linear_acceleration.z = acc_y
-
-    -- publish the message
-    spec.pub_imu:publish(imu_msg)
-
 end
