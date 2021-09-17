@@ -55,7 +55,7 @@ function RosVehicle:onLoad()
     -- rosVehicle namespace
     self.spec_rosVehicle = self["spec_" .. g_modROSModName .. ".rosVehicle"]
     local spec = self.spec_rosVehicle
-    -- rosVehicle variables
+    -- General rosVehicle variables
 
     -- there are two veh_name variables, one is with an id number and the other is without
     -- because there could be situations where the same vehicle model is spawned more than once in the FS world
@@ -71,14 +71,7 @@ function RosVehicle:onLoad()
         print(spec.ros_veh_name .. " does not have components[1].node")
         print("Can not publish odom, scan and imu messages for " ..  spec.ros_veh_name .. "so return")
     end
-
-    -- initialize linear velocity and time(s) for Imu messages
-    spec.l_v_x_0 = 0
-    spec.l_v_y_0 = 0
-    spec.l_v_z_0 = 0
-    spec.sec = 0
-
-    -- laser scanner initialization
+    -- Laser scanner initialization
 
     -- if there is no custom laser scanner setting for this vehicle, use the default settings to initialize an object of LaserScanner class
     -- note: a laser scanner is always mounted in the default settings
@@ -118,6 +111,15 @@ function RosVehicle:onLoad()
         local rot_x, rot_y, rot_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.z
         local laser_frame_1 = frames.create_attached_node(spec.instance_veh.cameraNode, self:getFullName(), tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
         spec.LaserFrameNode = laser_frame_1
+
+        -- Imu initialization
+
+        -- initialize linear velocity and time(s) for Imu messages
+        spec.l_v_x_0 = 0
+        spec.l_v_y_0 = 0
+        spec.l_v_z_0 = 0
+        spec.sec = 0
+
     end
 
     -- initialize publishers for Odometry, LaserScan and Imu messages for each rosVehicle
