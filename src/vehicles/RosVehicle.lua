@@ -101,10 +101,9 @@ function RosVehicle:onLoad()
             spec.instance_veh.vehicle.i3dMappings
         )
         if spec.instance_veh.cameraNode == nil then
-            print("nil camera")
-
+            print(spec.ros_veh_name .. " does not have cameraNode")
+            print("Can not publish laser scan messages for " .. spec.ros_veh_name)
         end
-
         -- create laser_frame_1 attached to raycastNode (x left, y up, z into the page)
         -- and apply a transform to the self.laser_frame_1
         local tran_x, tran_y, tran_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.z
@@ -211,11 +210,14 @@ end
 
 
 function RosVehicle:pubLaserScan(ros_time, tf_msg)
-
     local spec = self.spec_rosVehicle
-    -- only if the object of LaserScanner class was initialized in onload(), publish the LaserScan message
+    -- only if
+    -- the object of LaserScanner class was initialized in onload()
+    -- and the component 1 node exists
+    -- and the cameraNode exists
+    -- then publish the LaserScan message
     -- otherwise return
-    if spec.laser_scan_obj then
+    if spec.laser_scan_obj and spec.component_1_node and spec.instance_veh.cameraNode then
         spec.laser_scan_obj:doScan(ros_time, tf_msg)
     else
         return
