@@ -20,8 +20,11 @@ RosVehicle = {}
 -- RosVehicle.MOD_NAME = g_modROSModName
 
 
-function RosVehicle.prerequisitesPresent()
-    return true
+function RosVehicle.prerequisitesPresent(specializations)
+    -- make <drivable> spec as a prerequisite for rosVehicle since we only control vehicles which are drivable
+    -- if a vehicle does not have drivable spec, an error will occur
+    -- Not all prerequisites of specialization modROS.rosVehicle are fulfilled
+    return SpecializationUtil.hasSpecialization(Drivable, specializations)
 end
 
 
@@ -31,10 +34,9 @@ end
 
 function RosVehicle.registerFunctions(vehicleType)
     SpecializationUtil.registerFunction(vehicleType, "addTF", RosVehicle.addTF)
-    SpecializationUtil.registerFunction(vehicleType, "fillLaserData", RosVehicle.fillLaserData)
-    SpecializationUtil.registerFunction(vehicleType, "getLaserFrameNode", RosVehicle.getLaserFrameNode)
+    SpecializationUtil.registerFunction(vehicleType, "pubImu", RosVehicle.pubImu)
+    SpecializationUtil.registerFunction(vehicleType, "pubLaserScan", RosVehicle.pubLaserScan)
     SpecializationUtil.registerFunction(vehicleType, "pubOdom", RosVehicle.pubOdom)
-
 end
 
 
@@ -50,29 +52,103 @@ end
 -- end
 
 
+-- this will be loaded for every rosVehicle vehicle before starting the game
 function RosVehicle:onLoad()
     -- rosVehicle namespace
     self.spec_rosVehicle = self["spec_" .. g_modROSModName .. ".rosVehicle"]
     local spec = self.spec_rosVehicle
-    -- rosVehicle variables
-    -- .id is initialized by FS
-    spec.ros_veh_name = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
-    spec.base_link_frame = spec.ros_veh_name .. "/base_link"
+    -- General rosVehicle variables
 
+    -- there are two veh_name variables, one is with an id number and the other is without
+    -- because there could be situations where the same vehicle model is spawned more than once in the FS world
+    -- Hence, to create unique topic names for each vehicle, the name with id is necessary
+
+    -- variables without id are used as keys to retrieve config settings/tables
+    -- .id is initialized by FS
+    spec.ros_veh_name_with_id = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
+    spec.ros_veh_name = ros.Names.sanatize(self:getFullName())
+    spec.base_link_frame = spec.ros_veh_name_with_id .. "/base_link"
+    spec.component_1_node = self.components[1].node
+    if not spec.component_1_node then
+        print(spec.ros_veh_name_with_id .. " does not have components[1].node")
+        print("Can not publish odom, scan and imu messages for " ..  spec.ros_veh_name_with_id)
+    end
+    -- Laser scanner initialization
+
+    -- if there is no custom laser scanner setting for this vehicle, use the default settings to initialize an object of LaserScanner class
+    -- note: a laser scanner is always mounted in the default settings
+    if not mod_config.vehicle[spec.ros_veh_name] then
+        spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle["default_vehicle"])
+    -- if the custom laser scanner is mounted (parameter enabled = true), initialize an object of LaserScanner class
+    elseif mod_config.vehicle[spec.ros_veh_name].laser_scan.enabled then
+        spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[spec.ros_veh_name])
+    end
+
+    --  only if the object of LaserScanner class was initialized (the laser scanner is enabled), initialize camera settings
+    if spec.laser_scan_obj then
+        -- store the individual vehicle config file in the specialization to avoid reloading in the loop
+        spec.instance_veh = VehicleCamera:new(self, RosVehicle)
+        spec.xml_path = spec.instance_veh.vehicle.configFileName
+        spec.xmlFile = loadXMLFile("vehicle", spec.xml_path)
+        --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
+        --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)
+        local cameraKey = string.format("vehicle.enterable.cameras.camera(%d).%s", 0, spec.laser_scan_obj.vehicle_table.laser_scan.laser_attachments)
+        XMLUtil.checkDeprecatedXMLElements(spec.xmlFile, spec.xml_path, cameraKey .. "#index", "#node") -- FS17 to FS19
+        local camIndexStr = getXMLString(spec.xmlFile, cameraKey .. "#node")
+        spec.instance_veh.cameraNode =
+            I3DUtil.indexToObject(
+            spec.instance_veh.vehicle.components,
+            camIndexStr,
+            spec.instance_veh.vehicle.i3dMappings
+        )
+        if spec.instance_veh.cameraNode == nil then
+            print(spec.ros_veh_name_with_id .. " does not have cameraNode")
+            print("Can not publish laser scan messages for " .. spec.ros_veh_name)
+        end
+        -- create laser_frame_1 attached to raycastNode (x left, y up, z into the page)
+        -- and apply a transform to the self.laser_frame_1
+        local tran_x, tran_y, tran_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.z
+        local rot_x, rot_y, rot_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.z
+        local laser_frame_1 = frames.create_attached_node(spec.instance_veh.cameraNode, self:getFullName(), tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
+        spec.LaserFrameNode = laser_frame_1
+
+        -- Imu initialization
+
+        -- initialize linear velocity and time(s) for Imu messages
+        spec.l_v_x_0 = 0
+        spec.l_v_y_0 = 0
+        spec.l_v_z_0 = 0
+        spec.sec = 0
+    else
+        print("An object of LaserScanner class for " .. spec.ros_veh_name_with_id .. "was not initialized")
+        print("Can not publish laser scan messages for " .. spec.ros_veh_name_with_id)
+        print("Possible reason:")
+        print(" - there is no laser_scan.enabled configured in mod_config.lua")
+        print(" - laser_scan.enabled is set false")
+    end
+
+    -- initialize publishers for Odometry, LaserScan and Imu messages for each rosVehicle
+    spec.pub_odom = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/odom", nav_msgs_Odometry)
+    spec.pub_scan = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/scan", sensor_msgs_LaserScan)
+    spec.pub_imu = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/imu", sensor_msgs_Imu)
 end
 
 
-function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
+function RosVehicle:pubOdom(ros_time, tf_msg)
 
     local spec = self.spec_rosVehicle
     local vehicle_base_link = spec.base_link_frame
 
-
     -- retrieve the vehicle node we're interested in:
-    -- A drivable vehicle is always composed of 2 components and the first component is always the main part.
+    -- A drivable vehicle is often composed of 2 components and the first component is the main part.
     -- The second component is mostly the axis object. Hence we take component1 as our vehicle
     -- The components can be checked/viewed in each vehicle's 3D model.
-    local veh_node = self.components[1].node
+
+    -- if a vehicle somehow does not have self.components[1].node
+    -- stop publishing odometry and return
+    if not spec.component_1_node then return end
+
+    local veh_node = spec.component_1_node
 
     -- retrieve global (ie: world) coordinates of this node
     local p_x, p_y, p_z = getWorldTranslation(veh_node)
@@ -122,7 +198,7 @@ function RosVehicle:pubOdom(ros_time, tf_msg, pub_odom)
     -- TODO get AngularVelocity wrt local vehicle frame
     -- since the farmsim "getAngularVelocity()" can't get body-local angular velocity, we don't set odom_msg.twist.twist.angular for now
     -- publish the message
-    pub_odom:publish(odom_msg)
+    spec.pub_odom:publish(odom_msg)
 
     -- get tf from odom to vehicles
     local tf_odom_vehicle_link = geometry_msgs_TransformStamped.new()
@@ -138,49 +214,91 @@ function RosVehicle:addTF(tf_msg, TransformStamped)
 end
 
 
-function RosVehicle:fillLaserData(ros_time, tf_msg, pub_scan)
+function RosVehicle:pubLaserScan(ros_time, tf_msg)
     local spec = self.spec_rosVehicle
-    -- make sure the vechile is drivable and has laser frame node
-    if self:getLaserFrameNode() then
-        spec.laser_scan_obj:doScan(ros_time, tf_msg, pub_scan)
+    -- only if
+    -- the object of LaserScanner class was initialized in onload()
+    -- and the component 1 node exists
+    -- and the cameraNode exists
+    -- then publish the LaserScan message
+    -- otherwise return
+    if spec.laser_scan_obj and spec.component_1_node and spec.instance_veh.cameraNode then
+        spec.laser_scan_obj:doScan(ros_time, tf_msg)
+    else
+        return
     end
 end
 
 
-function RosVehicle:getLaserFrameNode()
+function RosVehicle:pubImu(ros_time)
+
     local spec = self.spec_rosVehicle
 
-    if self.spec_drivable then
-        local current_veh_name = ros.Names.sanatize(self:getFullName())
-        spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[current_veh_name])
+    -- if a vehicle somehow does not have self.components[1].node
+    -- stop publishing imu and return
+    if not spec.component_1_node then return end
 
-        local instance_veh = VehicleCamera:new(self, RosVehicle)
-        local xml_path = instance_veh.vehicle.configFileName
-        local xmlFile = loadXMLFile("vehicle", xml_path)
-        --  get the cameraRaycast node 2(on top of ) which is 0 index .raycastNode(0)
-        --  get the cameraRaycast node 3 (in the rear) which is 1 index .raycastNode(1)
-        local cameraKey = string.format("vehicle.enterable.cameras.camera(%d).%s", 0, spec.laser_scan_obj.vehicle_table.laser_scan.laser_attachments)
-        XMLUtil.checkDeprecatedXMLElements(xmlFile, xml_path, cameraKey .. "#index", "#node") -- FS17 to FS19
-        local camIndexStr = getXMLString(xmlFile, cameraKey .. "#node")
-        instance_veh.cameraNode =
-            I3DUtil.indexToObject(
-            instance_veh.vehicle.components,
-            camIndexStr,
-            instance_veh.vehicle.i3dMappings
-        )
-        if instance_veh.cameraNode == nil then
-            print("nil camera")
-        -- else
-        --     print(instance_veh.cameraNode)
-        end
-        -- create self.laser_frame_1 attached to raycastNode (x left, y up, z into the page)
-        -- and apply a transform to the self.laser_frame_1
-        local tran_x, tran_y, tran_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.translation.z
-        local rot_x, rot_y, rot_z = spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.x, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.y, spec.laser_scan_obj.vehicle_table.laser_scan.laser_transform.rotation.z
-        local laser_frame_1 = frames.create_attached_node(instance_veh.cameraNode, self:getFullName(), tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
-        spec.LaserFrameNode = laser_frame_1
-        return spec.LaserFrameNode
+    -- if there are no custom settings for this vehicle, use the default settings
+    if not mod_config.vehicle[spec.ros_veh_name] then
+        spec.imu = mod_config.vehicle["default_vehicle"].imu.enabled
     else
-        return nil
+        spec.imu = mod_config.vehicle[spec.ros_veh_name].imu.enabled
     end
+
+    -- if imu of this vehicle is disabled, return
+    if not spec.imu then return end
+
+    -- retrieve the vehicle node we're interested in
+    local veh_node = spec.component_1_node
+
+    -- retrieve global (ie: world) coordinates of this node
+    local q_x, q_y, q_z, q_w = getWorldQuaternion(veh_node)
+
+    -- get twist data and calculate acc info
+
+    -- check getVelocityAtWorldPos and getVelocityAtLocalPos
+    -- local linear vel: Get velocity at local position of transform object; "getLinearVelocity" is the the velocity wrt world frame
+    -- local l_v_z max is around 8(i guess the unit is m/s here) when reach 30km/hr(shown in speed indicator)
+    local l_v_x, l_v_y, l_v_z = getLocalLinearVelocity(veh_node)
+    -- we don't use getAngularVelocity(veh_node) here as the return value is wrt the world frame not local frame
+
+    -- TODO add condition to filter out the vehicle: train because it does not have velocity info
+    -- for now we'll just use 0.0 as a replacement value
+    if not l_v_x then l_v_x = 0.0 end
+    if not l_v_y then l_v_y = 0.0 end
+    if not l_v_z then l_v_z = 0.0 end
+
+    -- calculation of linear acceleration in x,y,z directions
+    local acc_x = (l_v_x - spec.l_v_x_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+    local acc_y = (l_v_y - spec.l_v_y_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+    local acc_z = (l_v_z - spec.l_v_z_0) / (g_currentMission.environment.dayTime / 1000 - spec.sec)
+    -- update the linear velocity and time
+    spec.l_v_x_0 = l_v_x
+    spec.l_v_y_0 = l_v_y
+    spec.l_v_z_0 = l_v_z
+    spec.sec = g_currentMission.environment.dayTime / 1000
+
+
+    -- create sensor_msgs/Imu instance
+    local imu_msg = sensor_msgs_Imu.new()
+    -- populate fields (not using sensor_msgs_Imu:set(..) here as this is much
+    -- more readable than a long list of anonymous args)
+    imu_msg.header.frame_id = "base_link"
+    imu_msg.header.stamp = ros_time
+    -- note the order of the axes here (see earlier comment about FS chirality)
+    imu_msg.orientation.x = q_z
+    imu_msg.orientation.y = q_x
+    imu_msg.orientation.z = q_y
+    imu_msg.orientation.w = q_w
+    -- TODO get AngularVelocity wrt local vehicle frame
+    -- since the farmsim `getAngularVelocity()` can't get body-local angular velocity, we don't set imu_msg.angular_velocity for now
+
+    -- note again the order of the axes
+    imu_msg.linear_acceleration.x = acc_z
+    imu_msg.linear_acceleration.y = acc_x
+    imu_msg.linear_acceleration.z = acc_y
+
+    -- publish the message
+    spec.pub_imu:publish(imu_msg)
+
 end
