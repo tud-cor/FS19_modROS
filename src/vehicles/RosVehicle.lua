@@ -21,7 +21,9 @@ RosVehicle = {}
 
 
 function RosVehicle.prerequisitesPresent(specializations)
-    -- make <drivable> spec as a prerequisite for now so that we only control vehicles which are drivable
+    -- make <drivable> spec as a prerequisite for rosVehicle since we only control vehicles which are drivable
+    -- if a vehicle does not have drivable spec, an error will occur
+    -- Not all prerequisites of specialization modROS.rosVehicle are fulfilled
     return SpecializationUtil.hasSpecialization(Drivable, specializations)
 end
 
