@@ -26,8 +26,11 @@ ros.Time = {}
 
 -- function for legalizing a name for ROS resources
 function ros.Names.sanatize(veh_name)
-    -- replace whitespace with underscores and uppercase with lowercase to meet the ROS naming conventions for TF
-    return veh_name:gsub(" ", "_"):lower()
+    -- in order to meet the ROS naming conventions, we need to sanitize illegal names from FS by using
+    -- 1. "%W" to replace every non-alphanumeric character with an underscore "_"
+    -- 2. "+" modifier to get the longest sequence of non-alphanumeric character, i.e. "___" -> "_" (replace consecutive _ with single _)
+    -- 3. :lower() to replace every uppercase letter with lowercase one
+    return veh_name:gsub("%W+", "_"):lower()
 end
 
 
