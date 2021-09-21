@@ -30,19 +30,15 @@ function ros.Names.sanatize(veh_name)
     -- 1. "%W" to replace every non-alphanumeric character with an underscore "_"
     -- 2. "+" modifier to get the longest sequence of non-alphanumeric character, i.e. "___" -> "_" (replace consecutive _ with single _)
     -- 3. :lower() to replace every uppercase letter with lowercase one
-    veh_name = veh_name:gsub("%W+", "_"):lower()
+    local local_veh_name = veh_name:gsub("%W+", "_"):lower()
 
     -- make sure names do not start or end with underscores
     -- if it starts with an underscore, remove the first character
-    if veh_name:sub(1,1) == "_" then
-        veh_name = veh_name:sub(2,-1)
-    end
-
     -- if it ends with an underscore, remove the last character
-    if veh_name:sub(-1,-1) == "_" then
-        veh_name = veh_name:sub(1,-2)
-    end
-    return veh_name
+    local_veh_name = local_veh_name:gsub("^_", "")
+    local_veh_name = local_veh_name:gsub("_$", "")
+
+    return local_veh_name
 end
 
 
