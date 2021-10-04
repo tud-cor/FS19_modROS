@@ -81,8 +81,11 @@ function Publisher:publish(msg)
         return nil, "Can't write to nil fd"
     end
 
-    -- try writing the serialised message to the connection
-    local ret, err = self._conx:write(self._topic_name .. "\n" .. msg.ROS_MSG_NAME .. "\n" .. msg:to_json())
+    -- try writing the serialised rosbridge message to the connection
+    local data = "{\"op\":\"publish\",\"topic\":\"" .. self._topic_name .. "\",\"msg\":" .. msg:to_json() .. "}"
+    local data_len = string.len(data)
+    local ret, err = self._conx:write(data)
+
     if not ret then
         return nil, "Error publishing message: '" .. err .. "'"
     end
