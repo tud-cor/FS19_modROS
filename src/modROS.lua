@@ -192,6 +192,17 @@ function ModROS:rosPubMsg(flag)
             local ret, err = self._conx:connect()
             if ret then
                 print("Opened '" .. self._conx:get_uri() .. "'")
+                -- advertising- tell ROS that we are going to publish messages on a given topic name.
+                for _, vehicle in pairs(g_currentMission.vehicles) do
+                    -- only if the vehicle is spec_rosVehicle, the publisher for Odometry, LaserScan and Imu messages can be called
+                    if vehicle.spec_rosVehicle then
+                        vehicle.spec_rosVehicle.pub_odom:advertise()
+                        vehicle.spec_rosVehicle.pub_scan:advertise()
+                        vehicle.spec_rosVehicle.pub_imu:advertise()
+                    end
+                end
+                self._pub_clock:advertise()
+                self._pub_tf:advertise()
             else
                 -- if not, print error to console and return
                 print(("Could not connect: %s"):format(err))
