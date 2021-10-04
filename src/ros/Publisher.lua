@@ -56,6 +56,23 @@ function Publisher:delete()
     -- nothing to do. Connection object is not owned by this Publisher
 end
 
+-- register publishers- advertise that we are publishing a topic
+function Publisher:advertise()
+    if not self._conx:is_connected() then
+        return nil, "Can't write to nil fd"
+    end
+
+    -- try writing the serialised rosbridge message to the connection
+    local data = "{\"op\":\"advertise\",\"topic\": \"" .. self._topic_name .. "\",\"type\":\"" .. self._message_type_name .. "\"}"
+    local data_len = string.len(data)
+    local ret, err = self._conx:write(data)
+
+    if not ret then
+        return nil, "Error advertise message: '" .. err .. "'"
+    end
+    return ret
+end
+
 function Publisher:publish(msg)
     if msg.ROS_MSG_NAME ~= self._message_type_name then
         return nil, ("Can't publish '%s' with publisher of type '%s'"):format(msg.ROS_MSG_NAME, self._message_type_name)
