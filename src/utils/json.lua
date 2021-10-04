@@ -62,8 +62,8 @@ local function kind_of(obj)
 end
 
 local function escape_str(s)
-  local in_char  = {'\\', '"', '/', '\b', '\f', '\n', '\r', '\t'}
-  local out_char = {'\\', '"', '/',  'b',  'f',  'n',  'r',  't'}
+  local in_char  = {'\\', '"', '\b', '\f', '\n', '\r', '\t'}
+  local out_char = {'\\', '"', '\b',  'f',  'n',  'r',  't'}
   for i, c in ipairs(in_char) do
     s = s:gsub(c, '\\' .. out_char[i])
   end
