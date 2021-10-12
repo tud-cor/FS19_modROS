@@ -175,8 +175,8 @@ function ModROS:publish_veh_odom_func()
     -- will assign the same stamp to all Odometry messages
     local ros_time = ros.Time.now()
     for _, vehicle in pairs(g_currentMission.vehicles) do
-        -- only if the vehicle is spec_rosVehicle, the pubOdom() can be called
-        if vehicle.spec_rosVehicle then
+        -- only publishing topics if the vehicle is spec_rosVehicle and the odom publisher enabled/created for this vehicle
+        if vehicle.spec_rosVehicle and vehicle.spec_rosVehicle.pub_odom then
             vehicle:pubOdom(ros_time, self.tf_msg)
         end
     end
@@ -189,8 +189,8 @@ function ModROS:publish_laser_scan_func()
     -- will assign the same stamp to all LaserScan messages
     local ros_time = ros.Time.now()
     for _, vehicle in pairs(g_currentMission.vehicles) do
-        -- only if the vehicle is spec_rosVehicle, the pubLaserScan() can be called
-        if vehicle.spec_rosVehicle then
+        -- only publishing topics if the vehicle is spec_rosVehicle and the scan publisher enabled/created for this vehicle
+        if vehicle.spec_rosVehicle and vehicle.spec_rosVehicle.pub_scan then
             vehicle:pubLaserScan(ros_time, self.tf_msg)
         end
     end
