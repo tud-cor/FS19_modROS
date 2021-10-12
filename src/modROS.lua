@@ -209,11 +209,32 @@ function ModROS:publish_imu_func()
     end
 end
 
+-- TODO make it topic specific, i.e. only stop and unsubscribe from a certain topic
+-- A.5. Console command allows to unregister publishers: "rosUnadvertise"
 -- messages publisher console command
+addConsoleCommand("rosUnadvertise", "unregister all publishers", "rosUnadvertise", ModROS)
+function ModROS:rosUnadvertise()
 
+    self.doPubMsg = false
+    print("stop publishing data before shutting down all publishers")
+    for _, vehicle in pairs(g_currentMission.vehicles) do
+        -- only if spec_rosVehicle is valid feild for this vehicle, i.e. only if the vehicle has the specialization: spec_rosVehicle
+        if vehicle.spec_rosVehicle then
+        --  unregister the publisher only if it has been initialized before
+            if vehicle.spec_rosVehicle.pub_odom then
+                vehicle.spec_rosVehicle.pub_odom:delete()
+            end
+            if vehicle.spec_rosVehicle.pub_scan then
+                vehicle.spec_rosVehicle.pub_scan:delete()
+            end
+            if vehicle.spec_rosVehicle.pub_imu then
+                vehicle.spec_rosVehicle.pub_imu:delete()
             end
         end
     end
+    self._pub_clock:delete()
+    self._pub_tf:delete()
+    print("all publishers have been shut down")
     -- debugging purpose
     -- if flag ~= nil and flag ~= "" and flag == "true" then
 
