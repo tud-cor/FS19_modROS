@@ -56,8 +56,12 @@ function Publisher.new(connection, topic_name, message_type)
     return self
 end
 
+
 function Publisher:delete()
-    -- nothing to do. Connection object is not owned by this Publisher
+    -- shutting down the publisher
+    self:unadvertise()
+end
+
 -- convert advertise table to JSON string
 function Publisher:advertise_table2json()
     self._advertise_table = {
@@ -103,6 +107,24 @@ function Publisher:advertise()
     end
     return ret
 end
+
+-- unregister publishers- stop advertising that we are publishing a topic
+function Publisher:unadvertise()
+    if not self._conx:is_connected() then
+        print("Can't unadvertise" .. self._topic_name .. "because the pipe is disconnected")
+        return nil, "Can't write to nil fd"
+    end
+
+    -- try writing the serialised rosbridge message to the connection
+    local ret, err = self._conx:write(self:unadvertise_table2json())
+
+    if not ret then
+        return nil, "Error unadvertising publisher: '" .. err .. "'"
+    end
+    return ret
+end
+
+
 
 function Publisher:publish(msg)
     if msg.ROS_MSG_NAME ~= self._message_type_name then
