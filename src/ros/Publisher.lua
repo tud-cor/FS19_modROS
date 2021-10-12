@@ -91,16 +91,15 @@ end
 -- register publishers- advertise that we are publishing a topic
 function Publisher:advertise()
     if not self._conx:is_connected() then
+        print("Can't advertise" .. self._topic_name .. "because the pipe is disconnected")
         return nil, "Can't write to nil fd"
     end
 
     -- try writing the serialised rosbridge message to the connection
-    local data = "{\"op\":\"advertise\",\"topic\": \"" .. self._topic_name .. "\",\"type\":\"" .. self._message_type_name .. "\"}"
-    local data_len = string.len(data)
-    local ret, err = self._conx:write(data)
+    local ret, err = self._conx:write(self:advertise_table2json())
 
     if not ret then
-        return nil, "Error advertise message: '" .. err .. "'"
+        return nil, "Error advertising the publisher: '" .. err .. "'"
     end
     return ret
 end
@@ -114,9 +113,7 @@ function Publisher:publish(msg)
     end
 
     -- try writing the serialised rosbridge message to the connection
-    local data = "{\"op\":\"publish\",\"topic\":\"" .. self._topic_name .. "\",\"msg\":" .. msg:to_json() .. "}"
-    local data_len = string.len(data)
-    local ret, err = self._conx:write(data)
+    local ret, err = self._conx:write(self:publish_table2json(msg))
 
     if not ret then
         return nil, "Error publishing message: '" .. err .. "'"
