@@ -209,51 +209,71 @@ function ModROS:publish_imu_func()
     end
 end
 
--- A.5. Console command allows to toggle publishers on/off: "rosPubMsg true/false"
 -- messages publisher console command
-addConsoleCommand("rosPubMsg", "write ros messages to named pipe", "rosPubMsg", ModROS)
-function ModROS:rosPubMsg(flag)
-    if flag ~= nil and flag ~= "" and flag == "true" then
 
-        if not self._conx:is_connected() then
-            print("connecting to named pipe")
-            local ret, err = self._conx:connect()
-            if ret then
-                print("Opened '" .. self._conx:get_uri() .. "'")
-                -- advertising- tell ROS that we are going to publish messages on a given topic name.
-                for _, vehicle in pairs(g_currentMission.vehicles) do
-                    -- only if the vehicle is spec_rosVehicle, the publisher for Odometry, LaserScan and Imu messages can be called
-                    if vehicle.spec_rosVehicle then
-                        vehicle.spec_rosVehicle.pub_odom:advertise()
-                        vehicle.spec_rosVehicle.pub_scan:advertise()
-                        vehicle.spec_rosVehicle.pub_imu:advertise()
-                    end
-                end
-                self._pub_clock:advertise()
-                self._pub_tf:advertise()
-            else
-                -- if not, print error to console and return
-                print(("Could not connect: %s"):format(err))
-                print("Possible reasons:")
-                print(" - symbolic link was not created")
-                print(" - the 'all_in_one_publisher.py' script is not running")
-                return
             end
         end
-        -- initialisation was successful
-        self.doPubMsg = true
-
-    elseif flag == nil or flag == "" or flag == "false" then
-        self.doPubMsg = false
-        print("stop publishing data, set true, if you want to publish Pose")
-
-        local ret, err = self._conx:disconnect()
-        if not ret then
-            print(("Could not disconnect: %s"):format(err))
-        else
-            print("Disconnected")
-        end
     end
+    -- debugging purpose
+    -- if flag ~= nil and flag ~= "" and flag == "true" then
+
+    --     if not self._conx:is_connected() then
+    --         print("connecting to named pipe")
+    --         local ret, err = self._conx:connect()
+    --         if ret then
+    --             print("Opened '" .. self._conx:get_uri() .. "'")
+    --             -- advertising- tell ROS that we are going to publish messages on a given topic name.
+    --             for _, vehicle in pairs(g_currentMission.vehicles) do
+    --                 -- only if the vehicle is spec_rosVehicle, the publisher for Odometry, LaserScan and Imu messages can be called
+    --                 if vehicle.spec_rosVehicle then
+    --                     if vehicle.spec_rosVehicle.pub_odom then
+    --                         vehicle.spec_rosVehicle.pub_odom:advertise()
+    --                     end
+    --                     if vehicle.spec_rosVehicle.pub_scan then
+    --                         vehicle.spec_rosVehicle.pub_scan:advertise()
+    --                     end
+    --                     if vehicle.spec_rosVehicle.pub_imu then
+    --                         vehicle.spec_rosVehicle.pub_imu:advertise()
+    --                     end
+    --                 end
+    --             end
+    --             self._pub_clock:advertise()
+    --             self._pub_tf:advertise()
+    --         else
+    --             -- if not, print error to console and return
+    --             print(("Could not connect: %s"):format(err))
+    --             print("Possible reasons:")
+    --             print(" - symbolic link was not created")
+    --             print(" - the 'all_in_one_publisher.py' script is not running")
+    --             return
+    --         end
+    --     end
+    --     -- initialisation was successful
+    --     self.doPubMsg = true
+
+    -- elseif flag == nil or flag == "" or flag == "false" then
+    --     self.doPubMsg = false
+    --     print("stop publishing data, set true, if you want to publish messages again")
+    --     print("shutting down all publishers before disconnecting the pipe")
+
+    --     for _, vehicle in pairs(g_currentMission.vehicles) do
+    --         -- only if the vehicle is spec_rosVehicle, the publisher for Odometry, LaserScan and Imu messages can be called
+    --         if vehicle.spec_rosVehicle then
+    --             vehicle.spec_rosVehicle.pub_odom:delete()
+    --             vehicle.spec_rosVehicle.pub_scan:delete()
+    --             vehicle.spec_rosVehicle.pub_imu:delete()
+    --         end
+    --     end
+    --     self._pub_clock:delete()
+    --     self._pub_tf:delete()
+
+    --     local ret, err = self._conx:disconnect()
+    --     if not ret then
+    --         print(("Could not disconnect: %s"):format(err))
+    --     else
+    --         print("Disconnected")
+    --     end
+    -- end
 end
 
 
