@@ -73,9 +73,7 @@ function RosVehicle:onLoad()
         print(spec.ros_veh_name_with_id .. " does not have components[1].node")
         print("Can not publish odom, scan and imu messages for " ..  spec.ros_veh_name_with_id)
     end
-    -- Laser scanner initialization
 
-    -- if there is no custom laser scanner setting for this vehicle, use the default settings to initialize an object of LaserScanner class
     -- Odometry initialization
     --
     --
@@ -89,12 +87,23 @@ function RosVehicle:onLoad()
         spec.pub_odom:advertise()
     end
 
+    -- Laser scanner initialization
+    --
+    --
+    -- if there is no custom laser scanner setting for this vehicle, use the default settings to create a Publisher and initialize an object of LaserScanner class
     -- note: a laser scanner is always mounted in the default settings
     if not mod_config.vehicle[spec.ros_veh_name] then
+        spec.pub_scan = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/scan", sensor_msgs_LaserScan)
+        -- register the publisher
+        spec.pub_scan:advertise()
         spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle["default_vehicle"])
-    -- if the custom laser scanner is mounted (parameter enabled = true), initialize an object of LaserScanner class
+        -- if the custom laser scanner is mounted (parameter enabled = true), create a Publisher and initialize an object of LaserScanner class
     elseif mod_config.vehicle[spec.ros_veh_name].laser_scan.enabled then
+        spec.pub_scan = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/scan", sensor_msgs_LaserScan)
+        -- register the publisher
+        spec.pub_scan:advertise()
         spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle[spec.ros_veh_name])
+
     end
 
     --  only if the object of LaserScanner class was initialized (the laser scanner is enabled), initialize camera settings
