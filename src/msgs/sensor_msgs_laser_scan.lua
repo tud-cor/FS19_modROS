@@ -40,7 +40,7 @@ function sensor_msgs_LaserScan.new()
     self.range_min = 0.0
     self.range_max = 0.0
     self.ranges = {}
-    self.intensities = {}
+    -- self.intensities = {}
 
     return self
 end
