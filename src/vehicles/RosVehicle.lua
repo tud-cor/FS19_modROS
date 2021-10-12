@@ -150,8 +150,6 @@ function RosVehicle:onLoad()
     end
 
     -- initialize publishers for Odometry, LaserScan and Imu messages for each rosVehicle
-    spec.pub_odom = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/odom", nav_msgs_Odometry)
-    spec.pub_scan = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/scan", sensor_msgs_LaserScan)
     spec.pub_imu = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/imu", sensor_msgs_Imu)
 end
 
