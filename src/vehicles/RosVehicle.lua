@@ -134,13 +134,6 @@ function RosVehicle:onLoad()
         local laser_frame_1 = frames.create_attached_node(spec.instance_veh.cameraNode, self:getFullName(), tran_x, tran_y, tran_z, rot_x, rot_y, rot_z)
         spec.LaserFrameNode = laser_frame_1
 
-        -- Imu initialization
-
-        -- initialize linear velocity and time(s) for Imu messages
-        spec.l_v_x_0 = 0
-        spec.l_v_y_0 = 0
-        spec.l_v_z_0 = 0
-        spec.sec = 0
     else
         print("An object of LaserScanner class for " .. spec.ros_veh_name_with_id .. "was not initialized")
         print("Can not publish laser scan messages for " .. spec.ros_veh_name_with_id)
@@ -149,8 +142,18 @@ function RosVehicle:onLoad()
         print(" - laser_scan.enabled is set false")
     end
 
-    -- initialize publishers for Odometry, LaserScan and Imu messages for each rosVehicle
+    -- Imu initialization
+
+    -- initialize a publisher for Imu messages for each rosVehicle
     spec.pub_imu = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/imu", sensor_msgs_Imu)
+    spec.pub_imu:advertise()
+    -- initialize linear velocity and time(s) for Imu messages
+    spec.l_v_x_0 = 0
+    spec.l_v_y_0 = 0
+    spec.l_v_z_0 = 0
+    spec.sec = 0
+
+
 end
 
 
