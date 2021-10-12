@@ -49,12 +49,44 @@ function Publisher.new(connection, topic_name, message_type)
     -- we're serialising
     self._message_type_name = message_type.ROS_MSG_NAME
 
+    self._advertise_table = ""
+    self._unadvertise_table = ""
+    self._publish_table = ""
+
     return self
 end
 
 function Publisher:delete()
     -- nothing to do. Connection object is not owned by this Publisher
+-- convert advertise table to JSON string
+function Publisher:advertise_table2json()
+    self._advertise_table = {
+        op = "advertise",
+        topic = self._topic_name,
+        type = self._message_type_name
+    }
+    return json.stringify(self._advertise_table)
 end
+
+-- convert unadvertise table to JSON string
+function Publisher:unadvertise_table2json()
+    self._unadvertise_table = {
+        op = "unadvertise",
+        topic = self._topic_name
+    }
+    return json.stringify(self._unadvertise_table)
+end
+
+-- convert publish table to JSON string
+function Publisher:publish_table2json(msg)
+    self._publish_table = {
+        op = "publish",
+        topic = self._topic_name,
+        msg = msg
+    }
+    return json.stringify(self._publish_table)
+end
+
 
 -- register publishers- advertise that we are publishing a topic
 function Publisher:advertise()
