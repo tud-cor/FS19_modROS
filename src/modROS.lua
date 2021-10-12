@@ -80,10 +80,38 @@ function ModROS:loadMap()
     self.path = ModROS.MOD_DIR .. "ROS_messages"
     self._conx = WriteOnlyFileConnection.new(self.path)
 
+    -- make connecting to the pipe happen automatically
+    -- if the name pipe is not created yet in the python side, it will keep trying until it's there
+    if not self._conx:is_connected() then
+        print("connecting to named pipe")
+        -- set initial condition false
+        local ret = false
+
+        while not ret do
+            ret, err = self._conx:connect()
+            if ret then
+                print("Opened '" .. self._conx:get_uri() .. "'")
+                break
+            else
+                -- print error to console and return
+                print(("Could not connect: %s"):format(err))
+                print("Possible reasons:")
+                print(" - symbolic link was not created")
+                print(" - the 'all_in_one_publisher.py' script is not running")
+                print("Keep trying to connect")
+            end
+        end
+    end
+
     -- initialise no-namespace-specific publishers
     self._pub_tf = Publisher.new(self._conx, "tf", tf2_msgs_TFMessage)
     self._pub_clock = Publisher.new(self._conx, "clock", rosgraph_msgs_Clock)
 
+    -- advertising- tell ROS that we are going to publish messages on a given topic name.
+    self._pub_clock:advertise()
+    self._pub_tf:advertise()
+    -- initialisation was successful
+    self.doPubMsg = true
     print("modROS (" .. ModROS.MOD_VERSION .. ") loaded")
 end
 
