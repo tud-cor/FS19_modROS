@@ -76,6 +76,19 @@ function RosVehicle:onLoad()
     -- Laser scanner initialization
 
     -- if there is no custom laser scanner setting for this vehicle, use the default settings to initialize an object of LaserScanner class
+    -- Odometry initialization
+    --
+    --
+    -- if there is no custom odom setting for this vehicle, use the default setting to determine if a publisher should be initialized and registered
+    -- note: an odom publisher is always enabled in the default setting
+    if not mod_config.vehicle[spec.ros_veh_name] then
+        spec.pub_odom = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/odom", nav_msgs_Odometry)
+        spec.pub_odom:advertise()
+    elseif mod_config.vehicle[spec.ros_veh_name].odom.enabled then
+        spec.pub_odom = Publisher.new(ModROS._conx, spec.ros_veh_name_with_id .."/odom", nav_msgs_Odometry)
+        spec.pub_odom:advertise()
+    end
+
     -- note: a laser scanner is always mounted in the default settings
     if not mod_config.vehicle[spec.ros_veh_name] then
         spec.laser_scan_obj = LaserScanner.new(self, mod_config.vehicle["default_vehicle"])

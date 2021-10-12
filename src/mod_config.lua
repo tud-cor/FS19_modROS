@@ -57,6 +57,9 @@ mod_config =
       raycast = {
         collision_mask = nil
       },
+      odom = {
+        enabled = true
+      },
       imu = {
         enabled = true
       }
@@ -94,6 +97,9 @@ mod_config =
       -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
       raycast = {
         collision_mask = nil
+      },
+      odom = {
+        enabled = true
       },
       imu = {
         enabled = false
@@ -133,6 +139,9 @@ mod_config =
       raycast = {
         collision_mask = nil
       },
+      odom = {
+        enabled = true
+      },
       imu = {
         enabled = true
       }
@@ -171,6 +180,9 @@ mod_config =
       raycast = {
         collision_mask = nil
       },
+      odom = {
+        enabled = true
+      },
       imu = {
         enabled = true
       }
@@ -208,6 +220,9 @@ mod_config =
       -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
       raycast = {
         collision_mask = nil
+      },
+      odom = {
+        enabled = true
       },
       imu = {
         enabled = true
