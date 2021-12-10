@@ -1,5 +1,12 @@
 # FS19_modROS
 
+## Development status
+
+As of 2021-12-08, this mod is not under active development any more.
+
+It will most likely remain functional (as FarmSim19 is not expected to change significantly), but it's not feature complete (see the issue tracker for open issues).
+
+
 ## Overview
 
 This mod for Farming Simulator 2019 allows autonomous driving of FarmSim vehicles with the ROS navigation stack.
