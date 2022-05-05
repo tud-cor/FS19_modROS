@@ -175,6 +175,44 @@ mod_config =
         enabled = true
       }
     },
+    lizard_caterpillar_836k_landfill_eiffage_18= {
+      laser_scan = {
+        enabled = true,
+        num_rays = 64,
+        num_layers = 2,
+        angle_min = -math.pi,
+        angle_max = math.pi,
+        range_min = 0.1,
+        range_max = 30,
+        ignore_terrain = true,
+        inter_layer_distance = 0.1,
+        -- apply a transform to first laser scan frame
+        laser_transform = {
+          translation = {
+              x = 0.0,
+              -- This lowers the origin of the scanner to be more in at an expected hight
+              -- since the original attachment point is on the bonnet and it's too high to see important obstacles
+              y = -1.5,
+              z = 0.0
+          },
+          rotation = {
+              -- positive rotation over X rotates laser scanner down (ie: math.pi/6)
+              x = 0.0,
+              y = 0.0,
+              z = 0.0
+          }
+        },
+        laser_attachments = "raycastNode(0)"
+      },
+      -- the collision_mask for raycasting can be customized. Both
+      -- decimal and hexadecimal notations are supported (ie: 9 and 0x9).
+      raycast = {
+        collision_mask = nil
+      },
+      imu = {
+        enabled = true
+      }
+    },
     default_vehicle = {
       laser_scan = {
         enabled = true,
