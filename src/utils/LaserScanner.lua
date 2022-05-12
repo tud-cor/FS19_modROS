@@ -74,10 +74,18 @@ function LaserScanner:getLaserData(laser_scan_array, x, y, z, dx_r, dy, dz_r)
                 table.insert(laser_scan_array, self.INIT_RAY_DISTANCE)
             end
         else
-            if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode and self.raycastTransformId ~= self.vehicle.components[1].node and  self.raycastTransformId ~= self.vehicle.components[2].node  then
-                table.insert(laser_scan_array, self.raycastDistance)
+            if spec.ros_veh_name == "lizard_caterpillar_836k_landfill_eiffage" then
+                if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode and self.raycastTransformId ~= self.vehicle.components[2].node and  self.raycastTransformId ~= self.vehicle.components[1].node  then
+                    table.insert(laser_scan_array, self.raycastDistance)
+                else
+                    table.insert(laser_scan_array, self.INIT_RAY_DISTANCE)
+                end
             else
-                table.insert(laser_scan_array, self.INIT_RAY_DISTANCE)
+                if self.raycastDistance ~= self.INIT_RAY_DISTANCE and self.raycastTransformId ~= g_currentMission.terrainRootNode and self.raycastTransformId ~= self.vehicle.components[1].node and  self.raycastTransformId ~= self.vehicle.components[2].node  then
+                    table.insert(laser_scan_array, self.raycastDistance)
+                else
+                    table.insert(laser_scan_array, self.INIT_RAY_DISTANCE)
+                end
             end
         end
     else
@@ -151,8 +159,14 @@ function LaserScanner:doScan(ros_time, tf_msg)
 
         -- get the translation from base_link to laser_frame_i
         -- laser_dy is the offset from laser_frame_i to laser_frame_i+1
-        local base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(spec.LaserFrameNode, self.vehicle.components[1].node, 0, laser_dy, 0)
-
+        -- lizard_caterpillar_836k_landfill_eiffage base Link is components[2] so needs
+        -- to be adjusted to match or LazerScan will be off on map
+        local base_to_laser_x, base_to_laser_y, base_to_laser_z
+        if spec.ros_veh_name == "lizard_caterpillar_836k_landfill_eiffage" then
+            base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(spec.LaserFrameNode, self.vehicle.components[2].node, 0, laser_dy, 0)
+        else
+            base_to_laser_x, base_to_laser_y, base_to_laser_z = localToLocal(spec.LaserFrameNode, self.vehicle.components[1].node, 0, laser_dy, 0)
+        end
         -- create single TransformStamped message
         local tf_base_link_laser_frame_i = geometry_msgs_TransformStamped.new()
         tf_base_link_laser_frame_i:set(

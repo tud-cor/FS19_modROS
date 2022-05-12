@@ -1,8 +1,9 @@
 vehicle_util = {}
 
 function vehicle_util.ROSControl(self, dt, acceleration, allowedToDrive, rotatedTime)
-    aiSteeringSpeed=0.0005
+    aiSteeringSpeed=0.001
     if acceleration ~= nil and rotatedTime ~= nil and allowedToDrive ~= nil then
+        print("-Rotated Time-",rotatedTime)
         if rotatedTime>=0 then
             rotatedTime=math.min(rotatedTime, self.maxRotTime)
         else
@@ -13,6 +14,7 @@ function vehicle_util.ROSControl(self, dt, acceleration, allowedToDrive, rotated
         else
             self.rotatedTime=math.max(self.rotatedTime-dt*aiSteeringSpeed, rotatedTime)
         end
+        print("-Actual Rotated Time-",self.rotatedTime)
         -- if self.rotatedTime = 7 turn left
         -- if self.rotatedTime = -7 turn right
         if self.firstTimeRun then

@@ -68,7 +68,11 @@ function RosVehicle:onLoad()
     spec.ros_veh_name_with_id = ros.Names.sanatize(self:getFullName() .. "_" .. self.id)
     spec.ros_veh_name = ros.Names.sanatize(self:getFullName())
     spec.base_link_frame = spec.ros_veh_name_with_id .. "/base_link"
-    spec.component_1_node = self.components[1].node
+    if spec.ros_veh_name == "lizard_caterpillar_836k_landfill_eiffage" then
+        spec.component_1_node = self.components[2].node
+    else
+        spec.component_1_node = self.components[1].node
+    end
     if not spec.component_1_node then
         print(spec.ros_veh_name_with_id .. " does not have components[1].node")
         print("Can not publish odom, scan and imu messages for " ..  spec.ros_veh_name_with_id)

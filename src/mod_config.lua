@@ -175,7 +175,7 @@ mod_config =
         enabled = true
       }
     },
-    lizard_caterpillar_836k_landfill_eiffage_18= {
+    lizard_caterpillar_836k_landfill_eiffage= {
       laser_scan = {
         enabled = true,
         num_rays = 64,
@@ -192,8 +192,8 @@ mod_config =
               x = 0.0,
               -- This lowers the origin of the scanner to be more in at an expected hight
               -- since the original attachment point is on the bonnet and it's too high to see important obstacles
-              y = -1.5,
-              z = 0.0
+              y = 0.0,
+              z = 2
           },
           rotation = {
               -- positive rotation over X rotates laser scanner down (ie: math.pi/6)
