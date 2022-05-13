@@ -192,8 +192,8 @@ mod_config =
               x = 0.0,
               -- This lowers the origin of the scanner to be more in at an expected hight
               -- since the original attachment point is on the bonnet and it's too high to see important obstacles
-              y = 0.0,
-              z = 2
+              y = -4.0,
+              z = 5.5
           },
           rotation = {
               -- positive rotation over X rotates laser scanner down (ie: math.pi/6)
