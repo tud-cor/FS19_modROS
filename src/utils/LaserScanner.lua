@@ -132,7 +132,7 @@ function LaserScanner:doScan(ros_time, tf_msg)
         -- with zero angle being forward along the x axis, scanning fov +-180 degrees
         scan_msg.angle_min = spec.laser_scan_obj.vehicle_table.laser_scan.angle_min
         scan_msg.angle_max = spec.laser_scan_obj.vehicle_table.laser_scan.angle_max
-        scan_msg.angle_increment = spec.laser_scan_obj.LS_FOV / spec.laser_scan_obj.vehicle_table.laser_scan.num_rays
+        scan_msg.angle_increment = spec.laser_scan_obj.LS_FOV / (spec.laser_scan_obj.vehicle_table.laser_scan.num_rays - 1)
         -- assume sensor gives 50 scans per second
         scan_msg.time_increment = (1.0 / 50) / spec.laser_scan_obj.vehicle_table.laser_scan.num_rays
         --scan_msg.scan_time = 0.0  -- we don't set this field (TODO: should we?)
