@@ -77,7 +77,7 @@ function ModROS:loadMap()
     self.l_v_z_0 = 0
 
     -- initialise connection to the Python side (but do not connect it yet)
-    self.path = ModROS.MOD_DIR .. "ROS_messages"
+    self.path = "\\\\.\\pipe\\FS19_modROS_pipe"
     self._conx = WriteOnlyFileConnection.new(self.path)
 
     -- initialise no-namespace-specific publishers
