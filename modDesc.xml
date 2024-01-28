@@ -12,7 +12,7 @@
         </en>
     </description>
     <author>tckarenchiang</author>
-    <version>0.0.2.0</version>
+    <version>0.0.3.0</version>
     <iconFilename>store.dds</iconFilename>
     <multiplayer supported="false"/>
     <extraSourceFiles>
